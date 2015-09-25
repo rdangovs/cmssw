@@ -2,7 +2,7 @@
 #define HGCPFLab_HyDRA_h
 
 #include "DataFormats/ParticleFlowReco/interface/PFRecHitFwd.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecTrackFwd.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "SimDataFormats/Track/interface/SimTrack.h"
@@ -50,7 +50,7 @@ public:
     HighRapidityDevRecoAssociation();
     virtual ~HighRapidityDevRecoAssociation();
     
-    void insertTrack(const TrackRef &);
+    void insertTrack(const PFRecTrackRef &);
     void insertRecHit(const PFRecHitRef &);
     void insertGenParticle(Barcode_t, const GenParticleRef &);
     void insertSimTrack(Barcode_t, const SimTrackRef &);
@@ -62,13 +62,11 @@ public:
     void buildSimTrackMap(bool clear_existing = false);
     void buildSimVertexMap(bool clear_existing = false);
     void buildSimHitMap(bool clear_existing = false);
-    /*
     void buildSimHitToSimTrackMap(bool clear_existing = false);
     void buildSimVertexToSimTrackMap(bool clear_existing = false);
     void buildSimTrackToSimVertexMap(bool clear_existing = false);
     void buildSimVertexToSimTrackParentMap(bool clear_existing = false);
     void buildRecoDetIdToSimHitMap(bool clear_existing = false);
-    */
 
 private:
 
@@ -97,7 +95,7 @@ private:
     vector<pair<RecoDetId_t,IndexAndFraction_t> > m_recoDetIdAndSimHit;
     
     // Object refs: persistent and used in runtime methods
-    TrackRefVector m_trackRefs;
+    PFRecTrackRefVector m_trackRefs;
     PFRecHitRefVector m_recHitRefs;
     GenParticleRefVector m_genParticleRefs;
     SimTrackRefVector m_simTrackRefs;

@@ -1,0 +1,11 @@
+<use   name="HGCPFLab/DataFormats"/>
+<use   name="DataFormats/Common"/>
+<use   name="DataFormats/HepMCCandidate"/>
+<use   name="SimDataFormats/Track"/>
+<use   name="SimDataFormats/Vertex"/>
+<use   name="SimDataFormats/CaloHit"/>
+<use   name="FWCore/Utilities"/>
+<!-- <Flags CXXFLAGS="-std=c++11"/> -->
+<export>
+        <lib name="1"/>
+</export>
