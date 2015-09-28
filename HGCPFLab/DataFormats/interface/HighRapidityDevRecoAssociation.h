@@ -28,7 +28,7 @@ using namespace reco;
 
 // Helpful labelling
 typedef unsigned Index_t;
-typedef unsigned Barcode_t;
+typedef int Barcode_t;
 typedef pair<unsigned,float> IndexAndFraction_t;
 typedef pair<Index_t,Index_t> IndexPair_t;
 typedef uint32_t RecoDetId_t;
@@ -46,7 +46,12 @@ public:
     void insertSimVertex(Barcode_t, const Ptr<SimVertex> &);
     void insertSimHit(Barcode_t, const Ptr<PCaloHit> &);
 
+    std::size_t genParticleMapSize() const { return m_genParticleBarcodeToIndex.size(); }
+    std::size_t genParticleSize() const { return m_genParticlePtrs.size(); }
+    std::size_t genParticleBarcodeSize() const { return m_genParticleBarcodes.size(); }
+
     // methods (primarily for iorule) to build transient hashmaps
+    // for iorule these apparently have to be public
     void buildGenParticleMap(bool clear_existing = false);
     void buildSimTrackMap(bool clear_existing = false);
     void buildSimVertexMap(bool clear_existing = false);

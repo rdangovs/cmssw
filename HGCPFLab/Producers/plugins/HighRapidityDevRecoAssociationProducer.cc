@@ -25,10 +25,14 @@ private:
     void produce( Event &, const EventSetup & ) override;
 
     EDGetTokenT<View<PFRecHit> > tokenHGCrechit_;
+    EDGetTokenT<View<GenParticle> > tokenGenParticle_;
+    EDGetTokenT<View<Barcode_t> > tokenGenBarcode_;
 };
 
 HighRapidityDevRecoAssociationProducer::HighRapidityDevRecoAssociationProducer( const ParameterSet &iConfig ) :
-    tokenHGCrechit_( consumes<View<PFRecHit> >( iConfig.getParameter<InputTag> ( "HGCrechitCollection" ) ) )
+    tokenHGCrechit_( consumes<View<PFRecHit> >( iConfig.getParameter<InputTag> ( "HGCrechitCollection" ) ) ),
+    tokenGenParticle_( consumes<View<GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) ),
+    tokenGenBarcode_( consumes<View<Barcode_t> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) )
 {
     produces<vector<HyDRA> >();
 }
@@ -41,9 +45,18 @@ void HighRapidityDevRecoAssociationProducer::produce( Event &iEvent, const Event
     Handle<View<PFRecHit> > HGCRecHitHandle;
     iEvent.getByToken(tokenHGCrechit_, HGCRecHitHandle);
 
+    Handle<View<GenParticle> > GenParticleHandle;
+    iEvent.getByToken(tokenGenParticle_, GenParticleHandle);
+    Handle<View<Barcode_t> > GenBarcodeHandle;
+    iEvent.getByToken(tokenGenBarcode_, GenBarcodeHandle);
+
     for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
         output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
     }        
+
+    for(unsigned i=0; i<GenParticleHandle->size(); i++) {
+        output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));
+    }
 
     iEvent.put( output );
 }

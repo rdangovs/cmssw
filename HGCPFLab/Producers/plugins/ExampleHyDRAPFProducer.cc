@@ -39,6 +39,11 @@ void ExampleHyDRAPFProducer::produce( Event &iEvent, const EventSetup & )
     iEvent.getByToken(tokenHyDRA_, HyDRAHandle);
     assert ( HyDRAHandle->size() == 1 );
     HyDRAObj.reset( HyDRAHandle->ptrAt(0).get() );
+
+    std::cout << "ExampleHyDRAPFProducer::produce size testing: " << std::endl;
+    std::cout << "  genParticleSize=" << HyDRAObj->genParticleSize() << std::endl;
+    std::cout << "  genParticleBarcodeSize=" << HyDRAObj->genParticleBarcodeSize() << std::endl;
+    std::cout << "  genParticleMapSize=" << HyDRAObj->genParticleMapSize() << std::endl;
 }
 
 DEFINE_FWK_MODULE( ExampleHyDRAPFProducer );
