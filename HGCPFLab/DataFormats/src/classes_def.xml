@@ -1,5 +1,19 @@
 <lcgdict>
 <class name="HighRapidityDevRecoAssociation" >
+  <field name="m_genParticleBarcodeToIndex" transient="true"/>
+  <field name="m_simTrackBarcodeToIndex" transient="true"/>
+  <field name="m_simVertexBarcodeToIndex" transient="true"/>
+  <field name="m_simHitBarcodeToIndex" transient="true"/>
+  <field name="m_simHitsToSimTracks" transient="true"/>
+  <field name="m_simVertexToSimTracks" transient="true"/>
+  <field name="m_simTrackToSimVertex" transient="true"/>
+  <field name="m_simVertexToSimTrackParent" transient="true"/>
+  <field name="m_recoDetIdToSimHits" transient="true"/>
   <!-- <version ClassVersion="10" checksum="0"/> -->
 </class>
+<ioread sourceClass = "HighRapidityDevRecoAssociation" version="[1-]" targetClass="HighRapidityDevRecoAssociation" 
+	source="vector<Barcode_t> m_genParticleBarcodes" 
+	target="m_genParticleBarcodeToIndex">
+  <![CDATA[ newObj->buildGenParticleMap(); ]]>
+</ioread>
 </lcgdict>

@@ -9,35 +9,35 @@ HighRapidityDevRecoAssociation::HighRapidityDevRecoAssociation()
 HighRapidityDevRecoAssociation::~HighRapidityDevRecoAssociation()
 {}
 
-void HighRapidityDevRecoAssociation::insertTrack(const PFRecTrackRef & trk) {
-    m_trackRefs.push_back(trk);
+void HighRapidityDevRecoAssociation::insertTrack(const Ptr<PFRecTrack> & trk) {
+    m_trackPtrs.push_back(trk);
 }
 
-void HighRapidityDevRecoAssociation::insertRecHit(const PFRecHitRef & hit) {
-    m_recHitRefs.push_back(hit);
+void HighRapidityDevRecoAssociation::insertRecHit(const Ptr<PFRecHit> & hit) {
+    m_recHitPtrs.push_back(hit);
 }
 
-void HighRapidityDevRecoAssociation::insertGenParticle(Barcode_t barcode, const GenParticleRef & gp) 
+void HighRapidityDevRecoAssociation::insertGenParticle(Barcode_t barcode, const Ptr<GenParticle> & gp) 
 {
-    m_genParticleRefs.push_back(gp);
+    m_genParticlePtrs.push_back(gp);
     m_genParticleBarcodes.push_back(barcode);
 }
 
-void HighRapidityDevRecoAssociation::insertSimTrack(Barcode_t barcode, const SimTrackRef & st)
+void HighRapidityDevRecoAssociation::insertSimTrack(Barcode_t barcode, const Ptr<SimTrack> & st)
 {
-    m_simTrackRefs.push_back(st);
+    m_simTrackPtrs.push_back(st);
     m_simTrackBarcodes.push_back(barcode);
 }
 
-void HighRapidityDevRecoAssociation::insertSimVertex(Barcode_t barcode, const SimVertexRef & sv)
+void HighRapidityDevRecoAssociation::insertSimVertex(Barcode_t barcode, const Ptr<SimVertex> & sv)
 {
-    m_simVertexRefs.push_back(sv);
+    m_simVertexPtrs.push_back(sv);
     m_simVertexBarcodes.push_back(barcode);
 }
 
-void HighRapidityDevRecoAssociation::insertSimHit(Barcode_t barcode, const SimHitRef & sh)
+void HighRapidityDevRecoAssociation::insertSimHit(Barcode_t barcode, const Ptr<PCaloHit> & sh)
 {
-    m_simHitRefs.push_back(sh);
+    m_simHitPtrs.push_back(sh);
     m_simHitBarcodes.push_back(barcode);
 }
 
@@ -146,15 +146,15 @@ void HighRapidityDevRecoAssociation::buildSimVertexToSimTrackParentMap(bool clea
 }
 
 void HighRapidityDevRecoAssociation::buildRecoDetIdToSimHitMap(bool clear_existing) {
-    if (m_recoDetIdToSimHit.size() > 0) {
+    if (m_recoDetIdToSimHits.size() > 0) {
         if (clear_existing) {
-            m_recoDetIdToSimHit.clear();
+            m_recoDetIdToSimHits.clear();
         } else {
             throw cms::Exception( "NotImplemented" ) << "Building a barcode map when one is already built not currently supported";
         }
     }
-    for(auto it = m_recoDetIdAndSimHit.begin() ; it != m_recoDetIdAndSimHit.end() ; it++) {
-        m_recoDetIdToSimHit.emplace(it->first,it->second);
+    for(auto it = m_recoDetIdAndSimHits.begin() ; it != m_recoDetIdAndSimHits.end() ; it++) {
+        m_recoDetIdToSimHits.emplace(it->first,it->second);
     }
 }
 

@@ -26,17 +26,6 @@ using namespace edm;
 using namespace std;
 using namespace reco;
 
-// Usual CMS conventions, but these seem not to be defined anywhere else
-typedef vector<SimTrack> SimTrackCollection;
-typedef Ref<SimTrackCollection> SimTrackRef;
-typedef RefVector<SimTrackCollection> SimTrackRefVector;
-typedef vector<SimVertex> SimVertexCollection;
-typedef Ref<SimVertexCollection> SimVertexRef;
-typedef RefVector<SimVertexCollection> SimVertexRefVector;
-typedef vector<PCaloHit> SimHitCollection;
-typedef Ref<SimHitCollection> SimHitRef;
-typedef RefVector<SimHitCollection> SimHitRefVector;
-
 // Helpful labelling
 typedef unsigned Index_t;
 typedef unsigned Barcode_t;
@@ -50,14 +39,14 @@ public:
     HighRapidityDevRecoAssociation();
     virtual ~HighRapidityDevRecoAssociation();
     
-    void insertTrack(const PFRecTrackRef &);
-    void insertRecHit(const PFRecHitRef &);
-    void insertGenParticle(Barcode_t, const GenParticleRef &);
-    void insertSimTrack(Barcode_t, const SimTrackRef &);
-    void insertSimVertex(Barcode_t, const SimVertexRef &);
-    void insertSimHit(Barcode_t, const SimHitRef &);
+    void insertTrack(const Ptr<PFRecTrack> &);
+    void insertRecHit(const Ptr<PFRecHit> &);
+    void insertGenParticle(Barcode_t, const Ptr<GenParticle> &);
+    void insertSimTrack(Barcode_t, const Ptr<SimTrack> &);
+    void insertSimVertex(Barcode_t, const Ptr<SimVertex> &);
+    void insertSimHit(Barcode_t, const Ptr<PCaloHit> &);
 
-    // methods (primarily for iorule) to build transient maps
+    // methods (primarily for iorule) to build transient hashmaps
     void buildGenParticleMap(bool clear_existing = false);
     void buildSimTrackMap(bool clear_existing = false);
     void buildSimVertexMap(bool clear_existing = false);
@@ -79,29 +68,31 @@ private:
     MultiMap<Index_t,Index_t> m_simVertexToSimTracks;
     MultiMap<Index_t,Index_t> m_simTrackToSimVertex; 
     MultiMap<Index_t,Index_t> m_simVertexToSimTrackParent; 
-    MultiMap<RecoDetId_t,IndexAndFraction_t> m_recoDetIdToSimHit;
+    MultiMap<RecoDetId_t,IndexAndFraction_t> m_recoDetIdToSimHits;
 
     // Vectors: persistent, potentially slow at runtime
     // These are used to build the Hashmaps above
     // Other methods will not use these directly
-    vector<Barcode_t> m_genParticleBarcodes; // indexed as m_genParticleRefs
-    vector<Barcode_t> m_simTrackBarcodes; // indexed as m_simTrackRefs
-    vector<Barcode_t> m_simVertexBarcodes; // indexed as m_simVertexRefs
-    vector<Barcode_t> m_simHitBarcodes; // indexed as m_simHitRefs
+    vector<Barcode_t> m_genParticleBarcodes; // indexed as m_genParticlePtrs
+    vector<Barcode_t> m_simTrackBarcodes; // indexed as m_simTrackPtrs
+    vector<Barcode_t> m_simVertexBarcodes; // indexed as m_simVertexPtrs
+    vector<Barcode_t> m_simHitBarcodes; // indexed as m_simHitPtrs
     vector<IndexPair_t> m_simHitsAndSimTracks;
     vector<IndexPair_t> m_simVertexAndSimTracks;
     vector<IndexPair_t> m_simTrackAndSimVertex;
     vector<IndexPair_t> m_simVertexAndSimTrackParent;
-    vector<pair<RecoDetId_t,IndexAndFraction_t> > m_recoDetIdAndSimHit;
+    vector<pair<RecoDetId_t,IndexAndFraction_t> > m_recoDetIdAndSimHits;
     
-    // Object refs: persistent and used in runtime methods
-    PFRecTrackRefVector m_trackRefs;
-    PFRecHitRefVector m_recHitRefs;
-    GenParticleRefVector m_genParticleRefs;
-    SimTrackRefVector m_simTrackRefs;
-    SimVertexRefVector m_simVertexRefs;
-    SimHitRefVector m_simHitRefs;
+    // Object ptrs: persistent and used in runtime methods
+    vector<Ptr<PFRecTrack> > m_trackPtrs;
+    vector<Ptr<PFRecHit> > m_recHitPtrs;
+    vector<Ptr<GenParticle> > m_genParticlePtrs;
+    vector<Ptr<SimTrack> > m_simTrackPtrs;
+    vector<Ptr<SimVertex> > m_simVertexPtrs;
+    vector<Ptr<PCaloHit> > m_simHitPtrs;
 };
+
+typedef HighRapidityDevRecoAssociation HyDRA;
 
 #endif
 

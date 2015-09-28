@@ -9,6 +9,7 @@
 <use   name="SimDataFormats/Vertex"/>
 <use   name="SimDataFormats/CaloHit"/>
 <use   name="FWCore/Utilities"/>
+<use   name="DataFormats/ParticleFlowReco"/>
 <!-- <Flags CXXFLAGS="-std=c++11"/> -->
 <flags EDM_PLUGIN="1"/>
 </library>
