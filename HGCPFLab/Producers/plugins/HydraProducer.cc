@@ -16,10 +16,10 @@
 using namespace std;
 using namespace edm;
 
-class HighRapidityDevRecoAssociationProducer : public EDProducer
+class HydraProducer : public EDProducer
 {
 public:
-    HighRapidityDevRecoAssociationProducer( const ParameterSet & );
+    HydraProducer( const ParameterSet & );
     
 private:
     void produce( Event &, const EventSetup & ) override;
@@ -29,17 +29,17 @@ private:
     EDGetTokenT<View<Barcode_t> > tokenGenBarcode_;
 };
 
-HighRapidityDevRecoAssociationProducer::HighRapidityDevRecoAssociationProducer( const ParameterSet &iConfig ) :
+HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     tokenHGCrechit_( consumes<View<PFRecHit> >( iConfig.getParameter<InputTag> ( "HGCrechitCollection" ) ) ),
     tokenGenParticle_( consumes<View<GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) ),
     tokenGenBarcode_( consumes<View<Barcode_t> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) )
 {
-    produces<vector<HyDRA> >();
+    produces<vector<Hydra> >();
 }
 
-void HighRapidityDevRecoAssociationProducer::produce( Event &iEvent, const EventSetup & )
+void HydraProducer::produce( Event &iEvent, const EventSetup & )
 {
-    auto_ptr<vector<HyDRA> > output( new vector<HyDRA> );
+    auto_ptr<vector<Hydra> > output( new vector<Hydra> );
     output->emplace_back();
 
     Handle<View<PFRecHit> > HGCRecHitHandle;
@@ -61,7 +61,7 @@ void HighRapidityDevRecoAssociationProducer::produce( Event &iEvent, const Event
     iEvent.put( output );
 }
 
-DEFINE_FWK_MODULE( HighRapidityDevRecoAssociationProducer );
+DEFINE_FWK_MODULE( HydraProducer );
 
 // Local Variables:
 // mode:c++

@@ -1,5 +1,5 @@
-#ifndef HGCPFLab_HyDRA_h
-#define HGCPFLab_HyDRA_h
+#ifndef HGCPFLab_Hydra_h
+#define HGCPFLab_Hydra_h
 
 #include "DataFormats/ParticleFlowReco/interface/PFRecHitFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrackFwd.h"
@@ -97,7 +97,7 @@ private:
     vector<Ptr<PCaloHit> > m_simHitPtrs;
 };
 
-typedef HighRapidityDevRecoAssociation HyDRA;
+typedef HighRapidityDevRecoAssociation Hydra;
 
 #endif
 
