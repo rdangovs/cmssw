@@ -1,0 +1,12 @@
+
+# in: /afs/cern.ch/work/s/sethzenz/fromscratch38/CMSSW_6_2_0_SLHC26_patch3/src/HGCPFLab/Producers/test dryRun for 'cd 12236_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon
+ cmsDriver.py QCD_Pt_80_120_14TeV_cfi  --conditions PH2_1K_FB_V6::All -n 10 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC --customise SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCalMuon --geometry Extended2023HGCalMuon,Extended2023HGCalMuonReco --magField 38T_PostLS1 --fileout file:step1.root  > step1_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon.log  --no_exec  2>&1
+ 
+
+# in: /afs/cern.ch/work/s/sethzenz/fromscratch38/CMSSW_6_2_0_SLHC26_patch3/src/HGCPFLab/Producers/test dryRun for 'cd 12236_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon
+ cmsDriver.py step2  --conditions PH2_1K_FB_V6::All -n 10 --eventcontent FEVTDEBUGHLT -s DIGI:pdigi_valid,L1,DIGI2RAW --datatier GEN-SIM-DIGI-RAW --customise SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCalMuon --geometry Extended2023HGCalMuon,Extended2023HGCalMuonReco --magField 38T_PostLS1 --filein file:step1.root  --fileout file:step2.root  > step2_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon.log  --no_exec  2>&1
+ 
+
+# in: /afs/cern.ch/work/s/sethzenz/fromscratch38/CMSSW_6_2_0_SLHC26_patch3/src/HGCPFLab/Producers/test dryRun for 'cd 12236_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon
+ cmsDriver.py step3  --conditions PH2_1K_FB_V6::All -n 10 --eventcontent RECOSIM -s RAW2DIGI,L1Reco,RECO --datatier GEN-SIM-RECO --customise SLHCUpgradeSimulations/Configuration/combinedCustoms.cust_2023HGCalMuon --geometry Extended2023HGCalMuon,Extended2023HGCalMuonReco --magField 38T_PostLS1 --filein file:step2.root  --fileout file:step3.root  > step3_QCD_Pt_80_120_14TeV+QCD_Pt_80_120_14TeV_Extended2023HGCalMuon_GenSimHLBeamSpotFull+DigiFull_Extended2023HGCalMuon+RecoFullHGCAL_Extended2023HGCalMuon.log   --no_exec 2>&1
+ 
