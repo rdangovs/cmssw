@@ -1,5 +1,5 @@
 <lcgdict>
-<class name="HighRapidityDevRecoAssociation" >
+<class name="HighRapidityDevRecoAssociation" ClassVersion="10" >
   <field name="m_genParticleBarcodeToIndex" transient="true"/>
   <field name="m_simTrackBarcodeToIndex" transient="true"/>
   <field name="m_simVertexBarcodeToIndex" transient="true"/>
@@ -9,20 +9,24 @@
   <field name="m_simTrackToSimVertex" transient="true"/>
   <field name="m_simVertexToSimTrackParent" transient="true"/>
   <field name="m_recoDetIdToSimHits" transient="true"/>
-  <!-- <version ClassVersion="10" checksum="0"/> -->
+  <version ClassVersion="10" checksum="2875204729"/>
 </class>
-<ioread sourceClass = "HighRapidityDevRecoAssociation" version="[1-]" targetClass="HighRapidityDevRecoAssociation" 
-	source="vector<Barcode_t> m_genParticleBarcodes" 
-	target="m_genParticleBarcodeToIndex">
-  <![CDATA[ newObj->buildGenParticleMap(); ]]>
+<ioread sourceClass = "HighRapidityDevRecoAssociation" version="[1-]" targetClass="HighRapidityDevRecoAssociation"  source="vector<Barcode_t> m_genParticleBarcodes"  target="m_genParticleBarcodeToIndex">
+  <![CDATA[ newObj->buildGenParticleMap();
+  ]]>
 </ioread>
-<!-- <class name="std::vector<HighRapidityDevRecoAssociation>"/> -->
-<!-- <class name="edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> >"/> -->
+<class name="std::vector<HighRapidityDevRecoAssociation>"/>
+<class name="edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> >"/>
 <class name="edm::PtrVector<reco::PFRecTrack>"/>
 <class name="edm::PtrVector<reco::PFRecHit>"/>
 <class name="edm::PtrVector<reco::GenParticle>"/>
 <class name="edm::PtrVector<SimTrack>"/>
 <class name="edm::PtrVector<SimVertex>"/>
 <class name="edm::PtrVector<PCaloHit>"/>
-
+<class name="std::vector<edm::Ptr<reco::PFRecTrack> >"/>
+<class name="std::vector<edm::Ptr<reco::PFRecHit> >"/>
+<class name="std::vector<edm::Ptr<reco::GenParticle> >"/>
+<class name="std::vector<edm::Ptr<SimTrack> >"/>
+<class name="std::vector<edm::Ptr<SimVertex> >"/>
+<class name="std::vector<edm::Ptr<PCaloHit> >"/>
 </lcgdict>

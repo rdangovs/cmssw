@@ -34,12 +34,12 @@ HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     tokenGenParticle_( consumes<View<GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) ),
     tokenGenBarcode_( consumes<View<Barcode_t> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) )
 {
-    produces<vector<Hydra> >();
+    produces<std::vector<Hydra> >();
 }
 
 void HydraProducer::produce( Event &iEvent, const EventSetup & )
 {
-    auto_ptr<vector<Hydra> > output( new vector<Hydra> );
+    auto_ptr<std::vector<Hydra> > output( new std::vector<Hydra> );
     output->emplace_back();
 
     Handle<View<PFRecHit> > HGCRecHitHandle;

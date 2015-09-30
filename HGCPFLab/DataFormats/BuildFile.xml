@@ -1,10 +1,12 @@
 <use   name="DataFormats/Common"/>
 <use   name="DataFormats/HepMCCandidate"/>
+<use   name="DataFormats/ParticleFlowReco"/>
 <use   name="SimDataFormats/Track"/>
 <use   name="SimDataFormats/Vertex"/>
 <use   name="SimDataFormats/CaloHit"/>
 <use   name="FWCore/Utilities"/>
 <!-- <Flags CXXFLAGS="-std=c++11"/> -->
+<use name="rootrflx"/>
 <export>
         <lib name="1"/>
 </export>

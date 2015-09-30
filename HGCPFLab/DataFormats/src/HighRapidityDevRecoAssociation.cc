@@ -43,6 +43,7 @@ void HighRapidityDevRecoAssociation::insertSimHit(Barcode_t barcode, const edm::
 }
 
 void HighRapidityDevRecoAssociation::buildGenParticleMap(bool clear_existing) {
+    std::cout << "HighRapidityDevRecoAssociation::buildGenParticleMap" << std::endl;
     if (m_genParticleBarcodeToIndex.size() > 0) {
         if (clear_existing) {
             m_genParticleBarcodeToIndex.clear();
