@@ -4,6 +4,7 @@
 #include "DataFormats/ParticleFlowReco/interface/PFRecHitFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrackFwd.h"
 
+#include "DataFormats/Common/interface/PtrVector.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "SimDataFormats/Track/interface/SimTrack.h"
 #include "SimDataFormats/Vertex/interface/SimVertex.h"
@@ -14,23 +15,19 @@
 // Workaround for reflex not liking C++11 prior to 76X
 #if !defined(__CINT__) && !defined(__MAKECINT__) && !defined(__REFLEX__)
 #include <unordered_map>
-#define Map unordered_map
-#define MultiMap unordered_multimap
+#define Map std::unordered_map
+#define MultiMap std::unordered_multimap
 #else 
 #include <map>
-#define Map map
-#define MultiMap multimap
+#define Map std::map
+#define MultiMap std::multimap
 #endif
-
-using namespace edm;
-using namespace std;
-using namespace reco;
 
 // Helpful labelling
 typedef unsigned Index_t;
 typedef int Barcode_t;
-typedef pair<unsigned,float> IndexAndFraction_t;
-typedef pair<Index_t,Index_t> IndexPair_t;
+typedef std::pair<unsigned,float> IndexAndFraction_t;
+typedef std::pair<Index_t,Index_t> IndexPair_t;
 typedef uint32_t RecoDetId_t;
 
 class HighRapidityDevRecoAssociation {
@@ -39,12 +36,12 @@ public:
     HighRapidityDevRecoAssociation();
     virtual ~HighRapidityDevRecoAssociation();
     
-    void insertTrack(const Ptr<PFRecTrack> &);
-    void insertRecHit(const Ptr<PFRecHit> &);
-    void insertGenParticle(Barcode_t, const Ptr<GenParticle> &);
-    void insertSimTrack(Barcode_t, const Ptr<SimTrack> &);
-    void insertSimVertex(Barcode_t, const Ptr<SimVertex> &);
-    void insertSimHit(Barcode_t, const Ptr<PCaloHit> &);
+    void insertTrack(const edm::Ptr<reco::PFRecTrack> &);
+    void insertRecHit(const edm::Ptr<reco::PFRecHit> &);
+    void insertGenParticle(Barcode_t, const edm::Ptr<reco::GenParticle> &);
+    void insertSimTrack(Barcode_t, const edm::Ptr<SimTrack> &);
+    void insertSimVertex(Barcode_t, const edm::Ptr<SimVertex> &);
+    void insertSimHit(Barcode_t, const edm::Ptr<PCaloHit> &);
 
     std::size_t genParticleMapSize() const { return m_genParticleBarcodeToIndex.size(); }
     std::size_t genParticleSize() const { return m_genParticlePtrs.size(); }
@@ -75,26 +72,26 @@ private:
     MultiMap<Index_t,Index_t> m_simVertexToSimTrackParent; 
     MultiMap<RecoDetId_t,IndexAndFraction_t> m_recoDetIdToSimHits;
 
-    // Vectors: persistent, potentially slow at runtime
+    // Std::Vectors: persistent, potentially slow at runtime
     // These are used to build the Hashmaps above
     // Other methods will not use these directly
-    vector<Barcode_t> m_genParticleBarcodes; // indexed as m_genParticlePtrs
-    vector<Barcode_t> m_simTrackBarcodes; // indexed as m_simTrackPtrs
-    vector<Barcode_t> m_simVertexBarcodes; // indexed as m_simVertexPtrs
-    vector<Barcode_t> m_simHitBarcodes; // indexed as m_simHitPtrs
-    vector<IndexPair_t> m_simHitsAndSimTracks;
-    vector<IndexPair_t> m_simVertexAndSimTracks;
-    vector<IndexPair_t> m_simTrackAndSimVertex;
-    vector<IndexPair_t> m_simVertexAndSimTrackParent;
-    vector<pair<RecoDetId_t,IndexAndFraction_t> > m_recoDetIdAndSimHits;
+    std::vector<Barcode_t> m_genParticleBarcodes; // indexed as m_genParticlePtrs
+    std::vector<Barcode_t> m_simTrackBarcodes; // indexed as m_simTrackPtrs
+    std::vector<Barcode_t> m_simVertexBarcodes; // indexed as m_simVertexPtrs
+    std::vector<Barcode_t> m_simHitBarcodes; // indexed as m_simHitPtrs
+    std::vector<IndexPair_t> m_simHitsAndSimTracks;
+    std::vector<IndexPair_t> m_simVertexAndSimTracks;
+    std::vector<IndexPair_t> m_simTrackAndSimVertex;
+    std::vector<IndexPair_t> m_simVertexAndSimTrackParent;
+    std::vector<std::pair<RecoDetId_t,IndexAndFraction_t> > m_recoDetIdAndSimHits;
     
     // Object ptrs: persistent and used in runtime methods
-    vector<Ptr<PFRecTrack> > m_trackPtrs;
-    vector<Ptr<PFRecHit> > m_recHitPtrs;
-    vector<Ptr<GenParticle> > m_genParticlePtrs;
-    vector<Ptr<SimTrack> > m_simTrackPtrs;
-    vector<Ptr<SimVertex> > m_simVertexPtrs;
-    vector<Ptr<PCaloHit> > m_simHitPtrs;
+    edm::PtrVector<reco::PFRecTrack> m_trackPtrs;
+    edm::PtrVector<reco::PFRecHit> m_recHitPtrs;
+    edm::PtrVector<reco::GenParticle> m_genParticlePtrs;
+    edm::PtrVector<SimTrack> m_simTrackPtrs;
+    edm::PtrVector<SimVertex> m_simVertexPtrs;
+    edm::PtrVector<PCaloHit> m_simHitPtrs;
 };
 
 typedef HighRapidityDevRecoAssociation Hydra;

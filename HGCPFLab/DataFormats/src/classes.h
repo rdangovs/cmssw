@@ -1,8 +1,22 @@
 #include "HGCPFLab/DataFormats/interface/HighRapidityDevRecoAssociation.h"
+#include "DataFormats/Common/interface/PtrVector.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecHit.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include <vector>
 
 namespace {
     struct dictionary {
         HighRapidityDevRecoAssociation hydra;
+        //        std::vector<HighRapidityDevRecoAssociation> vec_hydra;
+        //        edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> > wrp_vec_hydra;
+        edm::PtrVector<reco::PFRecTrack> trackPtrVec;
+        edm::PtrVector<reco::PFRecHit> recHitPtrVec;
+        edm::PtrVector<reco::GenParticle> genParticlePtrVec;
+        edm::PtrVector<SimTrack> simTrackPtrVec;
+        edm::PtrVector<SimVertex> simVertexPtrVec;
+        edm::PtrVector<PCaloHit> simHitPtrVec;
+
     };
 }
 

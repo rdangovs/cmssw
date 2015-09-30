@@ -12,9 +12,9 @@
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
-
 using namespace std;
 using namespace edm;
+using namespace reco;
 
 class HydraProducer : public EDProducer
 {
@@ -50,9 +50,9 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     Handle<View<Barcode_t> > GenBarcodeHandle;
     iEvent.getByToken(tokenGenBarcode_, GenBarcodeHandle);
 
-    for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
-        output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
-    }        
+    //    for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
+    //  output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
+    //    }        
 
     for(unsigned i=0; i<GenParticleHandle->size(); i++) {
         output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));

@@ -16,4 +16,13 @@
 	target="m_genParticleBarcodeToIndex">
   <![CDATA[ newObj->buildGenParticleMap(); ]]>
 </ioread>
+<!-- <class name="std::vector<HighRapidityDevRecoAssociation>"/> -->
+<!-- <class name="edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> >"/> -->
+<class name="edm::PtrVector<reco::PFRecTrack>"/>
+<class name="edm::PtrVector<reco::PFRecHit>"/>
+<class name="edm::PtrVector<reco::GenParticle>"/>
+<class name="edm::PtrVector<SimTrack>"/>
+<class name="edm::PtrVector<SimVertex>"/>
+<class name="edm::PtrVector<PCaloHit>"/>
+
 </lcgdict>

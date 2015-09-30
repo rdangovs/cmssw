@@ -24,7 +24,7 @@ private:
     void produce( Event &, const EventSetup & ) override;
 
     EDGetTokenT<View<Hydra> > tokenHydra_;
-    unique_ptr<const Hydra> HydraObj;
+    unique_ptr<const Hydra> hydraObj;
 };
 
 ExampleHydraPFProducer::ExampleHydraPFProducer( const ParameterSet &iConfig ) :
@@ -38,12 +38,12 @@ void ExampleHydraPFProducer::produce( Event &iEvent, const EventSetup & )
     Handle<View<Hydra> > HydraHandle;
     iEvent.getByToken(tokenHydra_, HydraHandle);
     assert ( HydraHandle->size() == 1 );
-    HydraObj.reset( HydraHandle->ptrAt(0).get() );
+    hydraObj.reset( HydraHandle->ptrAt(0).get() );
 
     std::cout << "ExampleHydraPFProducer::produce size testing: " << std::endl;
-    std::cout << "  genParticleSize=" << HydraObj->genParticleSize() << std::endl;
-    std::cout << "  genParticleBarcodeSize=" << HydraObj->genParticleBarcodeSize() << std::endl;
-    std::cout << "  genParticleMapSize=" << HydraObj->genParticleMapSize() << std::endl;
+    std::cout << "  genParticleSize=" << hydraObj->genParticleSize() << std::endl;
+    std::cout << "  genParticleBarcodeSize=" << hydraObj->genParticleBarcodeSize() << std::endl;
+    std::cout << "  genParticleMapSize=" << hydraObj->genParticleMapSize() << std::endl;
 }
 
 DEFINE_FWK_MODULE( ExampleHydraPFProducer );
