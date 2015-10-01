@@ -1,4 +1,3 @@
-// user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Utilities/interface/InputTag.h"
@@ -27,6 +26,16 @@ private:
     EDGetTokenT<View<PFRecHit> > tokenHGCrechit_;
     EDGetTokenT<View<GenParticle> > tokenGenParticle_;
     EDGetTokenT<View<Barcode_t> > tokenGenBarcode_;
+
+    /*
+    inputTagGeneralTracks_ = iConfig.getParameter<InputTag>("generaltracks");
+    inputTagtPRecoTrackAsssociation_ = iConfig.getParameter<InputTag>("tPRecoTrackAsssociation");
+    inputTagGenParticles_ = iConfig.getParameter<InputTag>("genParticles");
+    inputTagSimTracks_ = iConfig.getParameter<InputTag>("simTracks");
+    inputTagSimVertices_ = iConfig.getParameter<InputTag>("simVertices");
+    inputSimHits_ = iConfig.getParameter<std::vector<InputTag> >("HGCSimHits");
+    */
+
 };
 
 HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
@@ -47,12 +56,13 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
 
     Handle<View<GenParticle> > GenParticleHandle;
     iEvent.getByToken(tokenGenParticle_, GenParticleHandle);
+
     Handle<View<Barcode_t> > GenBarcodeHandle;
     iEvent.getByToken(tokenGenBarcode_, GenBarcodeHandle);
 
-    //    for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
-    //  output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
-    //    }        
+    for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
+        output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
+    }        
 
     for(unsigned i=0; i<GenParticleHandle->size(); i++) {
         output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));

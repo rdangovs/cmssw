@@ -10,6 +10,7 @@
 <use   name="SimDataFormats/CaloHit"/>
 <use   name="FWCore/Utilities"/>
 <use   name="DataFormats/ParticleFlowReco"/>
+<use   name="DataFormats/ParticleFlowCandidate"/>
 <!-- <Flags CXXFLAGS="-std=c++11"/> -->
 <flags EDM_PLUGIN="1"/>
 </library>
