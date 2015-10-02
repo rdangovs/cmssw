@@ -63,13 +63,22 @@ process.RECOSIMoutput.outputCommands += ["keep *_particleFlowRecHitHGCEE_*_*","k
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'PH2_1K_FB_V6::All', '')
 
+process.load("RecoParticleFlow/PandoraTranslator/HGCalTrackCollection_cfi")
+
 process.Hydra = cms.EDProducer('HydraProducer',
-                               HGCrechitCollection=cms.InputTag("particleFlowRecHitHGCEE"),
-                               GenParticleCollection=cms.InputTag("genParticles")
+                               HGCRecHitCollection=cms.InputTag("particleFlowRecHitHGCEE"), # this tag is wrong
+                               GenParticleCollection=cms.InputTag("genParticles"),
+                               RecTrackCollection=cms.InputTag("HGCalTrackCollection","TracksInHGCal"),
+                               SimTrackCollection=cms.InputTag("g4SimHits"),
+                               SimVertexCollection=cms.InputTag("g4SimHits"),
+                               SimHitCollection = cms.VInputTag('g4SimHits:HGCHitsEE',
+                                                                'g4SimHits:HGCHitsHEfront',
+                                                                'g4SimHits:HGCHitsHEback')
                                )
 
 process.ExampleReader = cms.EDProducer("ExampleHydraPFProducer",HydraTag=cms.InputTag("Hydra"))
 
+process.reconstruction += process.HGCalTrackCollection
 process.reconstruction += process.Hydra
 process.reconstruction += process.ExampleReader
 

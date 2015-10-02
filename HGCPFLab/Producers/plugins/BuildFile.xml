@@ -11,6 +11,13 @@
 <use   name="FWCore/Utilities"/>
 <use   name="DataFormats/ParticleFlowReco"/>
 <use   name="DataFormats/ParticleFlowCandidate"/>
+<use   name="Geometry/CaloGeometry"/>
+<use   name="Geometry/Records"/>
+<use   name="Geometry/EcalAlgo"/>
+<use   name="Geometry/CaloTopology"/>
+<use   name="Geometry/HcalTowerAlgo"/>
+<use   name="DataFormats/ForwardDetId"/>
+<use   name="Geometry/FCalGeometry"/>
 <!-- <Flags CXXFLAGS="-std=c++11"/> -->
 <flags EDM_PLUGIN="1"/>
 </library>

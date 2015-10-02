@@ -18,6 +18,7 @@ public:
 
     void buildGenParticleMap(const Hydra &, bool clear_existing = false);
     void buildSimTrackMap(const Hydra &, bool clear_existing = false);
+    void buildSimTrackGenMap(const Hydra &, bool clear_existing = false);
     void buildSimVertexMap(const Hydra &, bool clear_existing = false);
     void buildSimHitMap(const Hydra &, bool clear_existing = false);
     void buildSimHitToSimTrackMap(const Hydra &, bool clear_existing = false);
@@ -31,13 +32,14 @@ private:
     // Hashmaps: not persistent
     Map<Barcode_t,Index_t> m_genParticleBarcodeToIndex;
     Map<Barcode_t,Index_t> m_simTrackBarcodeToIndex;
+    Map<Barcode_t,Index_t> m_genBarcodeToSimTrackIndex;
     Map<Barcode_t,Index_t> m_simVertexBarcodeToIndex;
-    Map<Barcode_t,Index_t> m_simHitBarcodeToIndex;
+    Map<Barcode_t,IndexPair_t> m_simHitBarcodeToIndices;
     MultiMap<Index_t,Index_t> m_simHitsToSimTracks; 
-    MultiMap<Index_t,Index_t> m_simVertexToSimTracks;
-    MultiMap<Index_t,Index_t> m_simTrackToSimVertex; 
-    MultiMap<Index_t,Index_t> m_simVertexToSimTrackParent; 
-    MultiMap<RecoDetId_t,IndexAndFraction_t> m_recoDetIdToSimHits;
+    MultiMap<Barcode_t,Index_t> m_simVertexToSimTracks;
+    MultiMap<Barcode_t,Index_t> m_simTrackToSimVertex; 
+    MultiMap<Barcode_t,Index_t> m_simVertexToSimTrackParent; 
+    MultiMap<RecoDetId_t,SimHitInfo_t> m_recoDetIdToSimHits;
 };
 
 #endif

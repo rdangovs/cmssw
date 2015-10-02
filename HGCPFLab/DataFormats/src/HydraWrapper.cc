@@ -12,8 +12,8 @@ HydraWrapper::~HydraWrapper()
 
 HydraWrapper::HydraWrapper( const Hydra & h ) {
     buildGenParticleMap( h );
-    /*
     buildSimTrackMap( h );
+    buildSimTrackGenMap( h );
     buildSimVertexMap( h );
     buildSimHitMap( h );
     buildSimHitToSimTrackMap( h );
@@ -21,7 +21,6 @@ HydraWrapper::HydraWrapper( const Hydra & h ) {
     buildSimTrackToSimVertexMap( h );
     buildSimVertexToSimTrackParentMap( h );
     buildRecoDetIdToSimHitMap( h );
-    */
 }
 
 void HydraWrapper::buildGenParticleMap(const Hydra &h, bool clear_existing) {
@@ -47,7 +46,20 @@ void HydraWrapper::buildSimTrackMap(const Hydra &h, bool clear_existing) {
         }
     }
     for (unsigned i = 0 ; i < h.m_simTrackBarcodes.size() ; i++) {
-        m_simTrackBarcodeToIndex.emplace(h.m_simTrackBarcodes[i],i);;
+        m_simTrackBarcodeToIndex.emplace(h.m_simTrackBarcodes[i],i);
+    }
+}
+
+void HydraWrapper::buildSimTrackGenMap(const Hydra &h, bool clear_existing) {
+    if (m_genBarcodeToSimTrackIndex.size() > 0) {
+        if (clear_existing) {
+            m_genBarcodeToSimTrackIndex.clear();
+        } else {
+            throw cms::Exception( "NotImplemented" ) << "Building a barcode map when one is already built not currently supported";
+        }
+    }
+    for (unsigned i = 0 ; i < h.m_simTrackBarcodes.size() ; i++) {
+        m_genBarcodeToSimTrackIndex.emplace(h.m_simTrackGenBarcodes[i],i);
     }
 }
 
@@ -65,15 +77,17 @@ void HydraWrapper::buildSimVertexMap(const Hydra &h, bool clear_existing) {
 }
 
 void HydraWrapper::buildSimHitMap(const Hydra &h, bool clear_existing) {
-    if (m_simHitBarcodeToIndex.size() > 0) {
+    if (m_simHitBarcodeToIndices.size() > 0) {
         if (clear_existing) {
-            m_simHitBarcodeToIndex.clear();
+            m_simHitBarcodeToIndices.clear();
         } else {
             throw cms::Exception( "NotImplemented" ) << "Building a barcode map when one is already built not currently supported";
         }
     }
-    for (unsigned i = 0 ; i < h.m_simHitBarcodes.size() ; i++) {
-        m_simHitBarcodeToIndex.emplace(h.m_simHitBarcodes[i],i);
+    for (unsigned iCol = 0 ; iCol < 3 ; iCol++) {
+        for (unsigned iHit = 0 ; iHit < h.m_simHitBarcodes[iCol].size() ; iHit++) {
+            m_simHitBarcodeToIndices.emplace(h.m_simHitBarcodes[iCol][iHit],std::make_pair(iCol,iHit));
+        }
     }
 }
 
