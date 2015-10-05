@@ -35,10 +35,6 @@ public:
     void insertSimHit(Index_t,const edm::Ptr<PCaloHit> &);
     void setRecoDetIdMatchToSimHit(Index_t,const edm::Ptr<PCaloHit> &, RecoDetId_t, float);
 
-
-    std::size_t genParticleSize() const { return m_genParticlePtrs.size(); }
-    std::size_t genParticleBarcodeSize() const { return m_genParticleBarcodes.size(); }
-
 private:
 
     // Std::Vectors: persistent, potentially slow at runtime

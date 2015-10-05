@@ -5,12 +5,9 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+
 #include "HGCPFLab/DataFormats/interface/HighRapidityDevRecoAssociation.h"
 #include "HGCPFLab/DataFormats/interface/HydraWrapper.h"
-
-#include "DataFormats/ParticleFlowReco/interface/PFRecHit.h"
-#include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
@@ -50,17 +47,25 @@ void ExampleHydraPFProducer::produce( Event &iEvent, const EventSetup & )
     Handle<View<Hydra> > HydraHandle;
     iEvent.getByToken(tokenHydra_, HydraHandle);
     assert ( HydraHandle->size() == 1 );
-    std::cout << " We got our hydra objects" << std::endl;
-    hydraObj.reset( new HydraWrapper(*HydraHandle->ptrAt(0)) );
+    hydraObj.reset( new HydraWrapper( HydraHandle->ptrAt(0)) );
 
     auto_ptr<reco::PFClusterCollection> pfClusterCol ( new reco::PFClusterCollection );
     auto_ptr<reco::PFBlockCollection> pfBlockCol ( new reco::PFBlockCollection );
     auto_ptr<reco::PFCandidateCollection> pfCandidateCol ( new reco::PFCandidateCollection );
 
     std::cout << "ExampleHydraPFProducer::produce size testing: " << std::endl;
-    std::cout << "  genParticleSize=" << HydraHandle->ptrAt(0)->genParticleSize() << std::endl;
-    std::cout << "  genParticleBarcodeSize=" << HydraHandle->ptrAt(0)->genParticleBarcodeSize() << std::endl;
-    std::cout << "  genParticleMapSize=" << hydraObj->genParticleMapSize() << std::endl;
+    std::cout << "  genParticleSize=" << hydraObj->genParticleSize() << std::endl;
+    std::cout << "  recTrackSize=" << hydraObj->recTrackSize() << std::endl;
+    std::cout << "  recHitSize=" << hydraObj->recHitSize() << std::endl;
+    std::cout << "  simTrackSize=" << hydraObj->simTrackSize() << std::endl;
+    std::cout << "  simVertexSize=" << hydraObj->simVertexSize() << std::endl;
+    std::cout << "  simHitSize=" << hydraObj->simHitSize() << std::endl;
+
+    for ( std::size_t i = 0 ; i < hydraObj->simHitSize() ; i++) {
+        std::cout << "    SimHit " << i << " has collection index " << hydraObj->simHitCollectionIndex( i );
+        edm::Ptr<PCaloHit> mySimHit = hydraObj->simHit( i );
+        std::cout << " energy " << mySimHit->energy() << " detId " << mySimHit->id() << std::endl;
+    }
 
     iEvent.put ( pfClusterCol );
     iEvent.put ( pfBlockCol );

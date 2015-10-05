@@ -10,17 +10,51 @@ HydraWrapper::HydraWrapper()
 HydraWrapper::~HydraWrapper()
 {}
 
-HydraWrapper::HydraWrapper( const Hydra & h ) {
-    buildGenParticleMap( h );
-    buildSimTrackMap( h );
-    buildSimTrackGenMap( h );
-    buildSimVertexMap( h );
-    buildSimHitMap( h );
-    buildSimHitToSimTrackMap( h );
-    buildSimVertexToSimTrackMap( h );
-    buildSimTrackToSimVertexMap( h );
-    buildSimVertexToSimTrackParentMap( h );
-    buildRecoDetIdToSimHitMap( h );
+HydraWrapper::HydraWrapper( const edm::Ptr<Hydra> & h ) {
+
+    m_hydraCore = h;
+
+    buildGenParticleMap( *h );
+    buildSimTrackMap( *h );
+    buildSimTrackGenMap( *h );
+    buildSimVertexMap( *h );
+    buildSimHitMap( *h );
+    buildSimHitToSimTrackMap( *h );
+    buildSimVertexToSimTrackMap( *h );
+    buildSimTrackToSimVertexMap( *h );
+    buildSimVertexToSimTrackParentMap( *h );
+    buildRecoDetIdToSimHitMap( *h );
+}
+
+std::size_t HydraWrapper::simHitSize() const {
+    std::size_t result = 0;
+    for ( unsigned i = 0 ; i < 3 ; i++ ) {
+        result += m_hydraCore->m_simHitPtrs[i].size();
+    }
+    return result;
+}
+
+std::size_t HydraWrapper::simHitCollectionIndex( std::size_t hitIndex ) const {
+    std::size_t running_total = 0;
+    for ( unsigned collIndex = 0 ; collIndex < 3; collIndex++ ) {
+        running_total += m_hydraCore->m_simHitPtrs[collIndex].size();
+        if ( hitIndex < running_total ) {
+            return collIndex;
+        }
+    }
+    throw cms::Exception( "OutOfBounds" ) << " Requested particle is larger than the number of simHits";
+}
+
+edm::Ptr<PCaloHit> HydraWrapper::simHit( std::size_t hitIndex ) const {
+    std::size_t hitIndexInColl = hitIndex;
+    for ( unsigned collIndex = 0 ; collIndex < 3; collIndex++ ) {
+        if ( hitIndexInColl < m_hydraCore->m_simHitPtrs[collIndex].size() ) {
+            return m_hydraCore->m_simHitPtrs[collIndex][hitIndexInColl];
+        } else {
+            hitIndexInColl -= m_hydraCore->m_simHitPtrs[collIndex].size();
+        }
+    }
+    throw cms::Exception( "OutOfBounds" ) << " Requested particle is larger than the number of simHits";
 }
 
 void HydraWrapper::buildGenParticleMap(const Hydra &h, bool clear_existing) {
