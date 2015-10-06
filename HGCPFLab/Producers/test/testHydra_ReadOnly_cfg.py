@@ -6,5 +6,17 @@ process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring('fil
 
 process.ExampleReader = cms.EDProducer("ExampleHydraPFProducer",HydraTag=cms.InputTag("Hydra"))
 
-process.p = cms.Path(process.ExampleReader)
+process.FakeClusterGen = cms.EDProducer("HydraFakeClusterBuilder",HydraTag=cms.InputTag("Hydra"),
+                                       SplitRecHits=cms.bool(True),
+                                       UseGenParticles=cms.bool(True)
+                                       )
+
+process.FakeClusterCaloFace = cms.EDProducer("HydraFakeClusterBuilder",HydraTag=cms.InputTag("Hydra"),
+                                        SplitRecHits=cms.bool(True),
+                                        UseGenParticles=cms.bool(False)
+                                        )
+
+#process.testSequence = cms.Sequence(process.ExampleReader+process.FakeClusterGen+process.FakeClusterCaloFace)
+process.testSequence = cms.Sequence(process.FakeClusterGen+process.FakeClusterCaloFace)
+process.p = cms.Path(process.testSequence)
 

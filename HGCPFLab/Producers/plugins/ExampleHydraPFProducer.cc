@@ -61,10 +61,51 @@ void ExampleHydraPFProducer::produce( Event &iEvent, const EventSetup & )
     std::cout << "  simVertexSize=" << hydraObj->simVertexSize() << std::endl;
     std::cout << "  simHitSize=" << hydraObj->simHitSize() << std::endl;
 
+    for ( std::size_t i = 0 ; i < hydraObj->simTrackSize() ; i++) {
+        edm::Ptr<SimTrack> mySimTrack = hydraObj->simTrack( i );
+        auto p = mySimTrack->momentum();
+        float track_e = p.E();
+        float sum_e = 0.;
+        std::cout << " SimTrack " << i << " has pt eta geantId " << p.Pt() << " " << p.Eta() << " " << mySimTrack->trackId() << std::endl;
+        std::vector<edm::Ptr<PCaloHit> > hitList = hydraObj->simHitsFromSimTrack( i );
+        std::cout << "   List of " << hitList.size() << " attached hit energies: " << std::endl;
+        for ( std::size_t j = 0 ; j < hitList.size() ; j++ ) {                                                                                    
+            edm::Ptr<PCaloHit> aSimHit = hitList[j];                                                                                              
+            std::cout << "     * SimHit has energy " << aSimHit->energy() << " detId " << aSimHit->id() << std::endl;                          
+            sum_e += aSimHit->energy();
+        }
+        std::cout << "   Sum of energies of hits / track energy: " << sum_e << " " << track_e << std::endl;
+        sum_e = 0.;
+        hitList = hydraObj->simHitsFromSimTrack( i, true );
+        std::cout << "   List of " << hitList.size() << " attached hit energies including all subsequent daughters: " << std::endl;
+        for ( std::size_t j = 0 ; j < hitList.size() ; j++ ) {
+            edm::Ptr<PCaloHit> aSimHit = hitList[j];
+            std::cout << "     * SimHit has energy " << aSimHit->energy() << " detId " << aSimHit->id() << std::endl;
+            sum_e += aSimHit->energy();
+        }
+        std::cout << "   Sum of energies of hits / track energy: " << sum_e << " " << track_e << std::endl;
+    }
+
     for ( std::size_t i = 0 ; i < hydraObj->simHitSize() ; i++) {
         std::cout << "    SimHit " << i << " has collection index " << hydraObj->simHitCollectionIndex( i );
         edm::Ptr<PCaloHit> mySimHit = hydraObj->simHit( i );
-        std::cout << " energy " << mySimHit->energy() << " detId " << mySimHit->id() << std::endl;
+        std::cout << " energy " << mySimHit->energy() << " detId " << mySimHit->id();
+        if ( hydraObj->hasSimTrackFromSimHit( i ) ) {
+            edm::Ptr<SimTrack> mySimTrack = hydraObj->simTrackFromSimHit( i );
+            std::cout << " SimTrack pt " << mySimTrack->momentum().Pt() << std::endl;
+            /*
+            std::cout << "      CONSISTENCY: " << mySimTrack->trackId() << " " << mySimHit->geantTrackId() << std::endl;
+            Index_t mySimTrackIndex = hydraObj->simTrackFromSimHitIndex( i );
+            std::vector<edm::Ptr<PCaloHit> > hitList = hydraObj->simHitsFromSimTrack( mySimTrackIndex );
+            std::cout << "      List of simHits (total " << hitList.size() << ") associated to this SimTrack: " << std::endl;
+            for ( std::size_t j = 0 ; j < hitList.size() ; j++ ) {
+                edm::Ptr<PCaloHit> aSimHit = hitList[j];
+                std::cout << "        * SimHit has energy " << aSimHit->energy() << " detId " << aSimHit->id() << std::endl;
+            }
+            */
+        } else {
+            std::cout << "   ... has no SimTrack ( listed Id " << mySimHit->geantTrackId() << " )" << std::endl;
+        }
     }
 
     iEvent.put ( pfClusterCol );

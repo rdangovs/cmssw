@@ -19,7 +19,7 @@ HydraWrapper::HydraWrapper( const edm::Ptr<Hydra> & h ) {
     buildSimTrackGenMap( *h );
     buildSimVertexMap( *h );
     buildSimHitMap( *h );
-    buildSimHitToSimTrackMap( *h );
+    //    buildSimHitToSimTrackMap( *h );
     buildSimVertexToSimTrackMap( *h );
     buildSimTrackToSimVertexMap( *h );
     buildSimVertexToSimTrackParentMap( *h );
@@ -46,19 +46,131 @@ std::size_t HydraWrapper::simHitCollectionIndex( std::size_t hitIndex ) const {
 }
 
 edm::Ptr<PCaloHit> HydraWrapper::simHit( std::size_t hitIndex ) const {
+    IndexPair_t indices = simHitInternalIndices( hitIndex );
+    return m_hydraCore->m_simHitPtrs[indices.first][indices.second];
+}
+
+Index_t HydraWrapper::simHitExternalIndex( std::size_t collIndex, std::size_t hitIndexInColl ) const {
+    Index_t result = hitIndexInColl;
+    for ( unsigned collIndex = 0 ; collIndex < collIndex; collIndex++ ) {
+        result += m_hydraCore->m_simHitPtrs[collIndex].size();
+    }
+    return result;
+}
+
+IndexPair_t HydraWrapper::simHitInternalIndices( std::size_t hitIndex ) const {
     std::size_t hitIndexInColl = hitIndex;
     for ( unsigned collIndex = 0 ; collIndex < 3; collIndex++ ) {
         if ( hitIndexInColl < m_hydraCore->m_simHitPtrs[collIndex].size() ) {
-            return m_hydraCore->m_simHitPtrs[collIndex][hitIndexInColl];
+            return std::make_pair(collIndex, hitIndexInColl);
         } else {
             hitIndexInColl -= m_hydraCore->m_simHitPtrs[collIndex].size();
         }
     }
-    throw cms::Exception( "OutOfBounds" ) << " Requested particle is larger than the number of simHits";
+    throw cms::Exception( "OutOfBounds" ) << " Requested simHit is larger than the number of simHits";
 }
 
+bool HydraWrapper::hasSimTrackFromSimHit( std::size_t i ) const {
+    Barcode_t trackId = simHit( i )->geantTrackId();
+    return m_simTrackBarcodeToIndex.count( trackId );
+}
+
+Index_t HydraWrapper::simTrackFromSimHitIndex( std::size_t i ) const {
+    if ( ! hasSimTrackFromSimHit( i ) ) {
+        throw cms::Exception( "NoSimTrack" ) << " Requested simHit lists a barcode for which a simtrack is missing - pileup?";
+    }
+    return m_simTrackBarcodeToIndex.at(simHit( i )->geantTrackId());
+}
+
+
+edm::Ptr<SimTrack> HydraWrapper::simTrackFromSimHit( std::size_t i ) const { 
+    return m_hydraCore->m_simTrackPtrs[simTrackFromSimHitIndex( i )];
+}
+
+std::vector<edm::Ptr<PCaloHit> > HydraWrapper::simHitsFromSimTrack( std::size_t i, bool include_indirect_descendants ) const {
+    std::vector<edm::Ptr<PCaloHit> > result;
+    Barcode_t barcode = simTrack( i )->trackId();
+    auto range = m_simHitBarcodeToIndices.equal_range( barcode );
+    for ( auto iter = range.first ; iter != range.second ; iter++ ) {
+        result.push_back ( m_hydraCore->m_simHitPtrs[iter->second.first][iter->second.second] );
+    }
+    if (include_indirect_descendants) {
+        auto daughter_indices = daughterSimTrackIndicesFromSimTrack( i );
+        for ( auto dau_i : daughter_indices ) {
+            auto daughter_result = simHitsFromSimTrack( dau_i, true );
+            result.insert( result.end(), daughter_result.begin(), daughter_result.end() );
+        }
+    }
+    return result;
+}
+
+std::vector<Index_t> HydraWrapper::daughterSimTrackIndicesFromSimTrack ( std::size_t i ) const {
+    std::vector<Index_t> result;
+    Barcode_t trackBarcode = simTrack( i )->trackId();
+    if ( m_simTrackToSimVertex.count(trackBarcode) ) {
+        auto vertex_range = m_simTrackToSimVertex.equal_range( trackBarcode );
+        for ( auto vertex_iter = vertex_range.first ; vertex_iter != vertex_range.second ; vertex_iter++ ) {
+            Index_t decayVertexIndex = vertex_iter->second;
+            Barcode_t decayVertexBarcode = m_hydraCore->m_simVertexBarcodes[decayVertexIndex];
+            auto track_range = m_simVertexToSimTracks.equal_range( decayVertexBarcode );
+            for ( auto track_iter = track_range.first ; track_iter != track_range.second ; track_iter++ ) {
+                result.push_back ( track_iter->second );
+            }
+        }
+    }
+    return result;
+}
+
+std::vector<edm::Ptr<SimTrack> > HydraWrapper::daughterSimTracksFromSimTrack ( std::size_t i ) const {
+    std::vector<edm::Ptr<SimTrack> > result;
+    std::vector<Index_t> indices = daughterSimTrackIndicesFromSimTrack(i);
+    for ( auto index : indices ) {
+        result.push_back ( m_hydraCore->m_simTrackPtrs[index] );
+    }
+    return result;
+}
+
+bool HydraWrapper::hasSimHitFromRecHit( std::size_t i ) const {
+    RecoDetId_t currentRecoDetId = recHit( i )->detId();
+    return m_recoDetIdToSimHits.count( currentRecoDetId );
+}
+
+std::pair<Index_t,float> HydraWrapper::simHitIndexAndFractionFromRecHit( std::size_t i ) const {
+    //     std::vector<std::pair<RecoDetId_t,SimHitInfo_t> > m_recoDetIdAndSimHits;
+    //        typedef std::pair<IndexPair_t,float> SimHitInfo_t;                                                                                  
+    RecoDetId_t currentRecoDetId = recHit( i )->detId();
+    Index_t best_i = std::numeric_limits<Index_t>::max();
+    float best_f = -1.;
+    auto range = m_recoDetIdToSimHits.equal_range( currentRecoDetId );
+    for ( auto iter = range.first ; iter != range.second ; iter++ ) {
+        if ( iter->second.second > best_f ) {
+            best_f = iter->second.second;
+            best_i = simHitExternalIndex( iter->second.first.first, iter->second.first.second );
+        }
+    }
+    return std::make_pair( best_i, best_f );
+}
+
+std::pair<edm::Ptr<PCaloHit>,float> HydraWrapper::simHitAndFractionFromRecHit( std::size_t i ) const {
+    auto ind_and_fraction = simHitIndexAndFractionFromRecHit( i );
+    return std::make_pair( simHit( ind_and_fraction.first ), ind_and_fraction.second );
+}
+
+
+/*
+void HighRapidityDevRecoAssociation::insertSimVertex(const edm::Ptr<SimVertex> & sv)
+{   
+    Index_t i = m_simVertexPtrs.size();
+    m_simVertexPtrs.push_back(sv);
+    m_simVertexBarcodes.push_back(sv->vertexId());
+    if (!sv->noParent()) {
+        m_simTrackAndSimVertex.push_back( std::make_pair(sv->parentIndex(), i ) );
+        m_simVertexAndSimTrackParent.push_back( std::make_pair( sv->vertexId(), sv->parentIndex() ) );
+    }
+}
+*/
+
 void HydraWrapper::buildGenParticleMap(const Hydra &h, bool clear_existing) {
-    std::cout << "HydraWrapper::buildGenParticleMap" << std::endl;
     if (m_genParticleBarcodeToIndex.size() > 0) {
         if (clear_existing) {
             m_genParticleBarcodeToIndex.clear();
@@ -125,18 +237,21 @@ void HydraWrapper::buildSimHitMap(const Hydra &h, bool clear_existing) {
     }
 }
 
+/*
 void HydraWrapper::buildSimHitToSimTrackMap(const Hydra &h, bool clear_existing) {
     if (m_simHitsToSimTracks.size() > 0) {
         if (clear_existing) {
             m_simHitsToSimTracks.clear();
         } else {
-            throw cms::Exception( "NotImplemented" ) << "Building a barcode map when one is already built not currently supported";
+            throw cms::Exception( "NotImplemented" ) << "Building an index map when one is already built not currently supported";
         }
     }
     for (auto it = h.m_simHitsAndSimTracks.begin() ; it != h.m_simHitsAndSimTracks.end() ; it++) {
         m_simHitsToSimTracks.emplace(it->first,it->second);
+        m_simTracksToSimHits.emplace(it->second,it->first);
     }
 }
+*/
 
 void HydraWrapper::buildSimVertexToSimTrackMap(const Hydra &h, bool clear_existing) {
     if (m_simVertexToSimTracks.size() > 0) {

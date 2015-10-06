@@ -1,6 +1,6 @@
 <lcgdict>
 <class name="HighRapidityDevRecoAssociation" ClassVersion="10" >
-  <version ClassVersion="10" checksum="1077938648"/>
+  <version ClassVersion="10" checksum="1707523782"/>
 </class>
 <class name="std::vector<HighRapidityDevRecoAssociation>"/>
 <class name="edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> >"/>

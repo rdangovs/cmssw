@@ -45,7 +45,6 @@ private:
     std::vector<Barcode_t> m_simTrackGenBarcodes; // indexed as m_simTrackPtrs
     std::vector<Barcode_t> m_simVertexBarcodes; // indexed as m_simVertexPtrs
     std::vector<Barcode_t> m_simHitBarcodes[3]; // indexed as m_simHitPtrs
-    std::vector<IndexPair_t> m_simHitsAndSimTracks;
     std::vector<BarcodeIndexPair_t> m_simVertexAndSimTracks;
     std::vector<BarcodeIndexPair_t> m_simTrackAndSimVertex;
     std::vector<BarcodePair_t> m_simVertexAndSimTrackParent;
