@@ -64,7 +64,9 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'PH2_1K_FB_V6::All', '')
 process.load("RecoParticleFlow/PandoraTranslator/HGCalTrackCollection_cfi")
 
 process.Hydra = cms.EDProducer('HydraProducer',
-                               HGCRecHitCollection=cms.InputTag("particleFlowRecHitHGCEE"), # this tag is wrong
+                               HGCRecHitCollection=cms.VInputTag("particleFlowRecHitHGCEE",
+                                                                 "particleFlowRecHitHGCHEF",
+                                                                 "particleFlowRecHitHGCHEB"),
                                GenParticleCollection=cms.InputTag("genParticles"),
                                RecTrackCollection=cms.InputTag("HGCalTrackCollection","TracksInHGCal"),
                                SimTrackCollection=cms.InputTag("g4SimHits"),
@@ -100,11 +102,9 @@ process = cust_2023HGCalMuon(process)
 
 process.RECOSIMoutput.outputCommands =  cms.untracked.vstring("drop *",
                                                               "keep *_Hydra_*_*",
-                                                              "keep *_particleFlowRecHitHGCEE__*",
+                                                              "keep *_particleFlowRecHitHGC*__*",
                                                               "keep *GenParticle*_genParticles_*_*",
-                                                              "keep *_g4SimHits_HGCHitsEE_*",
-                                                              "keep *_g4SimHits_HGCHitsHEfront_*",
-                                                              "keep *_g4SimHits_HGCHitsHEback_*",
+                                                              "keep *_g4SimHits_HGCHits*_*",
                                                               "keep *SimTrack*_g4SimHits_*_*",
                                                               "keep *SimVertex*_g4SimHits_*_*",
                                                               "keep *_HGCalTrackCollection_TracksInHGCal_*")

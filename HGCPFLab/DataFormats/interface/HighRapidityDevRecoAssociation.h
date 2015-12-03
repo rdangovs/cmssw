@@ -28,7 +28,7 @@ public:
     virtual ~HighRapidityDevRecoAssociation();
     
     void insertTrack(const edm::Ptr<reco::PFRecTrack> &);
-    void insertRecHit(const edm::Ptr<reco::PFRecHit> &);
+    void insertRecHit(Index_t,const edm::Ptr<reco::PFRecHit> &);
     void insertGenParticle(Barcode_t, const edm::Ptr<reco::GenParticle> &);
     void insertSimTrack(const edm::Ptr<SimTrack> &);
     void insertSimVertex(const edm::Ptr<SimVertex> &);
@@ -52,7 +52,7 @@ private:
     
     // Object ptrs: persistent and used in runtime methods
     edm::PtrVector<reco::PFRecTrack> m_trackPtrs;
-    edm::PtrVector<reco::PFRecHit> m_recHitPtrs;
+    edm::PtrVector<reco::PFRecHit> m_recHitPtrs[3];
     edm::PtrVector<reco::GenParticle> m_genParticlePtrs;
     edm::PtrVector<SimTrack> m_simTrackPtrs;
     edm::PtrVector<SimVertex> m_simVertexPtrs;

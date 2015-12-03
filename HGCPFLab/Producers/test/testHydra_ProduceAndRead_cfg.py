@@ -66,7 +66,9 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'PH2_1K_FB_V6::All', '')
 process.load("RecoParticleFlow/PandoraTranslator/HGCalTrackCollection_cfi")
 
 process.Hydra = cms.EDProducer('HydraProducer',
-                               HGCRecHitCollection=cms.InputTag("particleFlowRecHitHGCEE"), # this tag is wrong
+                               HGCRecHitCollection=cms.VInputTag("particleFlowRecHitHGCEE",
+                                                                 "particleFlowRecHitHGCHEF",
+                                                                 "particleFlowRecHitHGCHEB"),
                                GenParticleCollection=cms.InputTag("genParticles"),
                                RecTrackCollection=cms.InputTag("HGCalTrackCollection","TracksInHGCal"),
                                SimTrackCollection=cms.InputTag("g4SimHits"),

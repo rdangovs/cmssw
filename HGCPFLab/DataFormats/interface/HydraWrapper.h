@@ -24,10 +24,15 @@ public:
     std::size_t recTrackSize() const { return m_hydraCore->m_trackPtrs.size(); }
     edm::Ptr<reco::PFRecTrack> recTrack( std::size_t i ) const { return m_hydraCore->m_trackPtrs[i]; }
 
-    std::size_t recHitSize() const { return m_hydraCore->m_recHitPtrs.size(); }
-    edm::Ptr<reco::PFRecHit> recHit( std::size_t i ) const { return m_hydraCore->m_recHitPtrs[i]; }
+    std::size_t recHitSize() const; // suppresses 3 separate collections, use recHitCollectionIndex if needed
+    std::size_t recHitCollectionIndex( std::size_t ) const; // cf. HydraProducer RecHitCollection vector
+    edm::Ptr<reco::PFRecHit> recHit( std::size_t ) const;
+    edm::Ref<reco::PFRecHitCollection> recHitRef( std::size_t ) const;
+
     std::pair<Index_t,float> simHitIndexAndFractionFromRecHit( std::size_t i ) const; // leading only
     std::pair<edm::Ptr<PCaloHit>,float > simHitAndFractionFromRecHit( std::size_t i ) const; // leading only
+    std::vector<std::pair<Index_t,float> > simHitIndexesAndFractionsFromRecHit( std::size_t i ) const;
+    std::vector<std::pair<edm::Ptr<PCaloHit>,float > > simHitsAndFractionsFromRecHit( std::size_t i ) const;
     bool hasSimHitFromRecHit( std::size_t ) const;
 
     std::size_t genParticleSize() const { return m_hydraCore->m_genParticlePtrs.size(); }
@@ -73,6 +78,7 @@ private:
     MultiMap<Barcode_t,Index_t> m_simVertexToSimTrackParent; 
     MultiMap<RecoDetId_t,SimHitInfo_t> m_recoDetIdToSimHits;
 
+    IndexPair_t recHitInternalIndices( std::size_t ) const;
     IndexPair_t simHitInternalIndices( std::size_t ) const;
     Index_t simHitExternalIndex( std::size_t, std::size_t ) const;
 };

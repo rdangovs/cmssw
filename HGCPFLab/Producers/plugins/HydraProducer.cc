@@ -45,7 +45,10 @@ private:
     void produce( Event &, const EventSetup & ) override;
     void beginLuminosityBlock( edm::LuminosityBlock const& , const edm::EventSetup& ) override;
 
-    EDGetTokenT<View<PFRecHit> > tokenHGCRecHit_;
+    unsigned int GetHGCLayer(const DetId& detid, const ForwardSubdetector& subdet) const;
+
+    //    EDGetTokenT<View<PFRecHit> > tokenHGCRecHit_;
+    std::vector<edm::InputTag> inputRecHits_;
     EDGetTokenT<View<GenParticle> > tokenGenParticle_;
     EDGetTokenT<View<Barcode_t> > tokenGenBarcode_;
     EDGetTokenT<View<PFRecTrack> > tokenPFRecTrack_;
@@ -67,7 +70,7 @@ private:
 };
 
 HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
-    tokenHGCRecHit_( consumes<View<PFRecHit> >( iConfig.getParameter<InputTag> ( "HGCRecHitCollection" ) ) ),
+    //    tokenHGCRecHit_( consumes<View<PFRecHit> >( iConfig.getParameter<InputTag> ( "HGCRecHitCollection" ) ) ),
     tokenGenParticle_( consumes<View<GenParticle> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) ),
     tokenGenBarcode_( consumes<View<Barcode_t> >( iConfig.getParameter<InputTag> ( "GenParticleCollection" ) ) ),
     tokenPFRecTrack_( consumes<View<PFRecTrack> >( iConfig.getParameter<InputTag> ("RecTrackCollection") ) ),
@@ -76,6 +79,7 @@ HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     //    tokenRecoToSim_( consumes<RecoToSimCollection>( iConfig.getParameter<InputTag> ("RecoToSimCollection") ) )
 {
     inputSimHits_ = iConfig.getParameter<std::vector<InputTag> >("SimHitCollection");
+    inputRecHits_ = iConfig.getParameter<std::vector<InputTag> >("HGCRecHitCollection");
     debug_ = iConfig.getUntrackedParameter<bool>("Debug",true);
 
     produces<std::vector<Hydra> >();
@@ -93,8 +97,8 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     auto_ptr<std::vector<Hydra> > output( new std::vector<Hydra> );
     output->emplace_back(); // constructs an empty object
 
-    Handle<View<PFRecHit> > HGCRecHitHandle;
-    iEvent.getByToken(tokenHGCRecHit_, HGCRecHitHandle);
+    //    Handle<View<PFRecHit> > HGCRecHitHandle;
+    //    iEvent.getByToken(tokenHGCRecHit_, HGCRecHitHandle);
     Handle<View<GenParticle> > GenParticleHandle;
     iEvent.getByToken(tokenGenParticle_, GenParticleHandle);
     Handle<View<Barcode_t> > GenBarcodeHandle;
@@ -112,6 +116,13 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
         std::cout << tag << std::endl;
         simHits.emplace_back( Handle<View<PCaloHit> >() );
         iEvent.getByLabel(tag,simHits.back());
+    }
+
+    vector<Handle<View<PFRecHit> > > recHits;
+    for( const auto& tag : inputRecHits_ ) {
+        std::cout << tag << std::endl;
+        recHits.emplace_back( Handle<View<PFRecHit> >() );
+        iEvent.getByLabel(tag,recHits.back());
     }
 
     // setup the reco det id to sim-hit match
@@ -152,6 +163,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                                    );
             reco_detIds.insert(recoDetId);
             temp_recoDetIdToSimHit.emplace(recoDetId,make_tuple(i,j,0.0f));
+            std::cout << " Inserted simHit from detector " << i << " in layer " << layer << std::endl;
         }
     }
 
@@ -177,7 +189,6 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     if (debug_) {
         for( const unsigned detid : reco_detIds ) {
             auto range = temp_recoDetIdToSimHit.equal_range(detid);
-            cout << "Dumping reco_detId " << detid << endl;
             for( auto iter = range.first; iter != range.second; ++iter ) {
                 cout << "  SimHit detIndex=" << get<0>(iter->second) << " hitIndex=" << get<1>(iter->second) << " fraction=" << get<2>(iter->second) << endl;
             }
@@ -190,9 +201,19 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     for(unsigned i=0; i<SimVertexHandle->size(); i++) {
         output->back().insertSimVertex(SimVertexHandle->ptrAt(i));
     }
-    for(unsigned i=0; i<HGCRecHitHandle->size(); i++) {
-        output->back().insertRecHit(HGCRecHitHandle->ptrAt(i));
-    }        
+    for( unsigned i = 0; i < recHits.size(); ++i ) {
+        for( unsigned j = 0; j < recHits[i]->size(); ++j ) {
+            std::cout << " i=" << i << " j=" << j << " detId=" << recHits[i]->ptrAt(j)->detId() << " subdet=" << (ForwardSubdetector)(i+3) << std::endl;
+            unsigned int layer = 999;
+            try {
+                layer = GetHGCLayer( recHits[i]->ptrAt(j)->detId(), (ForwardSubdetector)(i+3));
+            } catch ( const cms::Exception& e ) {
+                std::cout << "   caught exception " << e.what() << " but moving on" << std::endl;
+            }
+            std::cout << " Inserted recHit from detector " << i << " in layer " << layer << std::endl;
+            output->back().insertRecHit(i,recHits[i]->ptrAt(j));
+        }
+    }
     for(unsigned i=0; i<GenParticleHandle->size(); i++) {
         output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));
     }
@@ -212,6 +233,21 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
 
     iEvent.put( output );
 }
+
+unsigned int HydraProducer::GetHGCLayer(const DetId& detid, const ForwardSubdetector& subdet) const {
+    unsigned int layer = 0;
+    if(subdet==ForwardSubdetector::HGCEE) {
+        layer = (unsigned int) ((HGCEEDetId)(detid)).layer() ;
+    }
+    else if(subdet==ForwardSubdetector::HGCHEF){
+        layer = (unsigned int) ((HGCHEDetId)(detid)).layer() ;
+    }
+    else if(subdet==ForwardSubdetector::HGCHEB){
+        layer = (unsigned int) ((HGCHEDetId)(detid)).layer() ;
+    }
+    return layer;
+}
+
 
 DEFINE_FWK_MODULE( HydraProducer );
 

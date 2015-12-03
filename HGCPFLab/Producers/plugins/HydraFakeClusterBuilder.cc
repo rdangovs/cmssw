@@ -17,6 +17,10 @@
 #include "DataFormats/ParticleFlowReco/interface/PFBlockFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElementTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockElementCluster.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecHitFraction.h"
+//#include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
+
+//#include "RecoParticleFlow/PandoraTranslator/plugins/PandoraCMSPFCandProducer.h" // for CalibHGC
 
 using namespace std;
 using namespace edm;
@@ -39,13 +43,20 @@ private:
                         // if false, assign each rechit fully to the simtrack that contributed most
 
     bool debugPrint_;
+    double minDebugEnergy_;
+
+    //    CalibHGC m_calibEE, m_calibHEF, m_calibHEB;
+    //    bool calibInitialized;
+    // https://github.com/lgray/cmssw/blob/topic_cheated_reco/RecoParticleFlow/PandoraTranslator/plugins/PandoraCMSPFCandProducer.cc#L390-L477
 };
 
 HydraFakeClusterBuilder::HydraFakeClusterBuilder( const ParameterSet &iConfig ) :
     tokenHydra_( consumes<View<Hydra> >( iConfig.getParameter<InputTag> ( "HydraTag" ) ) ),
     useGenParticles_( iConfig.getParameter<bool>( "UseGenParticles" ) ),
     splitRecHits_( iConfig.getParameter<bool>( "SplitRecHits" ) ),
-    debugPrint_( iConfig.getUntrackedParameter<bool>( "DebugPrint" , true ) )
+    debugPrint_( iConfig.getUntrackedParameter<bool>( "DebugPrint" , true ) ),
+    minDebugEnergy_( iConfig.getUntrackedParameter<double>( "MinDebugEnergy", 10. ) )
+    //    m_calibEE(ForwardSubdetector::HGCEE,"EE",debugPrint), m_calibHEF(ForwardSubdetector::HGCHEF,"HEF",debugPrint), m_calibHEB(ForwardSubdetector::HGCHEB,"HEB",debugPrint), calibInitialized(false),
 {
     produces<reco::PFClusterCollection>();
 }
@@ -53,6 +64,10 @@ HydraFakeClusterBuilder::HydraFakeClusterBuilder( const ParameterSet &iConfig ) 
 void HydraFakeClusterBuilder::produce( Event &iEvent, const EventSetup & )
 {
     std::cout << " HydraFakeClusterBuilder::produce useGenParticles=" << useGenParticles_ << std::endl;
+    //    if ( splitRecHits_ ) {
+    //        throw cms::Exception("NotImplemented")
+    //            << "splitRecHits option not available just yet";
+    //    }
     Handle<View<Hydra> > HydraHandle;
     iEvent.getByToken(tokenHydra_, HydraHandle);
     assert ( HydraHandle->size() == 1 );
@@ -82,8 +97,10 @@ void HydraFakeClusterBuilder::produce( Event &iEvent, const EventSetup & )
         for ( auto i : tracksToBecomeClusters ) {
             edm::Ptr<SimTrack> currentTrack = hydraObj->simTrack( i );
             auto p = currentTrack->momentum();
-            std::cout << "   Track for cheated cluster " << i << " has energy eta geantId pdgId " << p.E() << " " << p.Eta() 
-                      << " " << currentTrack->trackId() << " " << currentTrack->type() << std::endl;
+            if (p.E() > minDebugEnergy_) {
+                std::cout << "   Track for cheated cluster " << i << " has energy eta geantId pdgId " << p.E() << " " << p.Eta() 
+                          << " " << currentTrack->trackId() << " " << currentTrack->type() << std::endl;
+            }
         }
     }
 
@@ -94,19 +111,70 @@ void HydraFakeClusterBuilder::produce( Event &iEvent, const EventSetup & )
         for ( unsigned j = 0 ; j < hydraObj->recHitSize(); j++ ) {
             edm::Ptr<reco::PFRecHit> currentRecHit = hydraObj->recHit( j );
             if ( hydraObj->hasSimHitFromRecHit( j ) ) {
-                auto result = hydraObj->simHitAndFractionFromRecHit( j );
-                auto match = std::find(simHits.begin(), simHits.end(), result.first );
-                if ( match != simHits.end() ) {
-                    if ( debugPrint_ ) {
-                        std::cout << "   Track " << i << " matches to rechit " << j << " with fraction " << result.second;
-                        std::cout << "     e(track) = " << currentTrack->momentum().E() << " e(hit)=" << currentRecHit->energy();
-                        std::cout << std::endl;
+                if ( !splitRecHits_ ) {
+                    auto result = hydraObj->simHitAndFractionFromRecHit( j );
+                    auto match = std::find(simHits.begin(), simHits.end(), result.first );
+                    if ( match != simHits.end() ) {
+                        if ( false && debugPrint_ ) {
+                            std::cout << "   Track " << i << " matches to rechit " << j << " with fraction " << result.second;
+                            std::cout << "     e(track) = " << currentTrack->momentum().E() << " e(hit)=" << currentRecHit->energy();
+                            std::cout << std::endl;
+                        }
+                        edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( i );
+                        if ( false && debugPrint_ ) std::cout << "    energy of currentRecHitRef: " << currentRecHitRef->energy() << std::endl;
+                        std::cout << "       Unsplit: we use a fraction of 1, but it's really " << result.second << std::endl;
+                        reco::PFRecHitFraction rhf( currentRecHitRef, 1. ); // unsplit case
+                        temp.addRecHitFraction( rhf );
                     }
-                    // Need to actually add the information to the cluster!
+                } else {
+                    auto result_vec = hydraObj->simHitsAndFractionsFromRecHit( j );
+                    for ( auto result : result_vec ) {
+                        auto match = std::find(simHits.begin(), simHits.end(), result.first );
+                        if ( match != simHits.end() ) {
+                            if ( false && debugPrint_ ) {
+                                std::cout << "   Track " << i << " matches to rechit " << j << " with fraction " << result.second;
+                                std::cout << "     e(track) = " << currentTrack->momentum().E() << " e(hit)=" << currentRecHit->energy();
+                                std::cout << std::endl;
+                            }
+                            edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( i );
+                            if ( false && debugPrint_ ) std::cout << "    energy of currentRecHitRef: " << currentRecHitRef->energy() << std::endl;
+                            std::cout << "     Split: fraction=" << result.second << std::endl;
+                            reco::PFRecHitFraction rhf( currentRecHitRef, result.second ); // split case
+                            temp.addRecHitFraction( rhf );
+                        }
+                    }
                 }
             }
         }
-        pfClusterCol->push_back( temp );
+
+        // Cluster position calculation is not log weighted yet!
+        float cl_energy = 0.;
+        float cl_x =0., cl_y =0., cl_z =0.;
+        int n_h = 0;
+        for( const reco::PFRecHitFraction& rhf : temp.recHitFractions() ) {
+            const reco::PFRecHitRef& refhit = rhf.recHitRef();
+            const double rh_fraction = rhf.fraction();
+            const double rh_rawenergy = refhit->energy();
+            const double rh_energy = rh_rawenergy * rh_fraction;   
+            cl_energy += rh_energy;
+            auto cl_pos = refhit->position();
+            cl_x += cl_pos.x();
+            cl_y += cl_pos.y();
+            cl_z += cl_pos.z();
+            n_h++;
+        }
+        if (n_h > 0) {
+            temp.setEnergy(cl_energy);
+            temp.setPosition(math::XYZPoint(cl_x/n_h,cl_y/n_h,cl_z/n_h));
+            if ( currentTrack->momentum().E() > minDebugEnergy_ ) {
+                if (debugPrint_) std::cout << "Track " << i << " energy=" << currentTrack->momentum().E() << " fake cluster energy=" << temp.energy() << std::endl;
+                if (debugPrint_) std::cout << "Track " << i << " eta=" << currentTrack->momentum().Eta() << " fake cluster eta=" << temp.eta() << std::endl;
+                if (debugPrint_) std::cout << "Track " << i << " phi=" << currentTrack->momentum().Phi() << " fake cluster phi=" << temp.phi() << std::endl;
+            }
+            pfClusterCol->push_back( temp );
+        } else {
+            if ( false ) std::cout << "   cluster has no hits, skipping" << std::endl;
+        }
     }
         
 

@@ -14,8 +14,8 @@ void HighRapidityDevRecoAssociation::insertTrack(const edm::Ptr<reco::PFRecTrack
     m_trackPtrs.push_back(trk);
 }
 
-void HighRapidityDevRecoAssociation::insertRecHit(const edm::Ptr<reco::PFRecHit> & hit) {
-    m_recHitPtrs.push_back(hit);
+void HighRapidityDevRecoAssociation::insertRecHit(Index_t iCol, const edm::Ptr<reco::PFRecHit> & hit) {
+    m_recHitPtrs[iCol].push_back(hit);
 }
 
 void HighRapidityDevRecoAssociation::insertGenParticle(Barcode_t barcode, const edm::Ptr<reco::GenParticle> & gp) 

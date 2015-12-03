@@ -26,6 +26,51 @@ HydraWrapper::HydraWrapper( const edm::Ptr<Hydra> & h ) {
     buildRecoDetIdToSimHitMap( *h );
 }
 
+std::size_t HydraWrapper::recHitSize() const {
+    std::size_t result = 0;
+    for ( unsigned i = 0 ; i < 3 ; i++ ) {
+        result += m_hydraCore->m_recHitPtrs[i].size();
+    }
+    return result;
+}
+
+std::size_t HydraWrapper::recHitCollectionIndex( std::size_t hitIndex ) const {
+    std::size_t running_total = 0;
+    for ( unsigned collIndex = 0 ; collIndex < 3; collIndex++ ) {
+        running_total += m_hydraCore->m_recHitPtrs[collIndex].size();
+        if ( hitIndex < running_total ) {
+            return collIndex;
+        }
+    }
+    throw cms::Exception( "OutOfBounds" ) << " Requested particle is larger than the number of recHits";
+}
+
+edm::Ptr<reco::PFRecHit> HydraWrapper::recHit( std::size_t hitIndex ) const {
+    IndexPair_t indices = recHitInternalIndices( hitIndex );
+    return m_hydraCore->m_recHitPtrs[indices.first][indices.second];
+}
+
+IndexPair_t HydraWrapper::recHitInternalIndices( std::size_t hitIndex ) const {
+    std::size_t hitIndexInColl = hitIndex;
+    for ( unsigned collIndex = 0 ; collIndex < 3; collIndex++ ) {
+        if ( hitIndexInColl < m_hydraCore->m_recHitPtrs[collIndex].size() ) {
+            return std::make_pair(collIndex, hitIndexInColl);
+        } else {
+            hitIndexInColl -= m_hydraCore->m_recHitPtrs[collIndex].size();
+        }
+    }
+    throw cms::Exception( "OutOfBounds" ) << " Requested recHit is larger than the number of recHits";
+}
+
+edm::Ref<reco::PFRecHitCollection> HydraWrapper::recHitRef( std::size_t i ) const {
+    edm::Ptr<reco::PFRecHit> recHitPtr = recHit( i );
+    IndexPair_t indices = recHitInternalIndices( i );
+    assert(!recHitPtr.isTransient());
+    edm::EDProductGetter const* getter = m_hydraCore->m_recHitPtrs[indices.first].productGetter();
+    assert(getter);
+    return edm::Ref<reco::PFRecHitCollection>(recHitPtr.id(), recHitPtr.key(), getter);
+}
+
 std::size_t HydraWrapper::simHitSize() const {
     std::size_t result = 0;
     for ( unsigned i = 0 ; i < 3 ; i++ ) {
@@ -133,6 +178,29 @@ std::vector<edm::Ptr<SimTrack> > HydraWrapper::daughterSimTracksFromSimTrack ( s
 bool HydraWrapper::hasSimHitFromRecHit( std::size_t i ) const {
     RecoDetId_t currentRecoDetId = recHit( i )->detId();
     return m_recoDetIdToSimHits.count( currentRecoDetId );
+}
+
+std::vector<std::pair<Index_t,float> > HydraWrapper::simHitIndexesAndFractionsFromRecHit( std::size_t i ) const {
+    std::vector<std::pair<Index_t,float> > result;
+    RecoDetId_t currentRecoDetId = recHit( i )->detId();
+    auto range = m_recoDetIdToSimHits.equal_range( currentRecoDetId );
+    float ftot = 0.;
+    for ( auto iter = range.first ; iter != range.second ; iter++ ) {
+        Index_t result_i = simHitExternalIndex( iter->second.first.first, iter->second.first.second );
+        float result_f = iter->second.second;
+        ftot += result_f;
+        result.push_back( std::make_pair(result_i, result_f) );
+    }
+    std::cout << " quick debug: f_tot=" << ftot << std::endl;
+    return result;
+}
+
+std::vector<std::pair<edm::Ptr<PCaloHit>,float > > HydraWrapper::simHitsAndFractionsFromRecHit( std::size_t i ) const {
+    std::vector<std::pair<edm::Ptr<PCaloHit>,float > > result;
+    for ( auto ind_and_fraction : simHitIndexesAndFractionsFromRecHit( i ) ) {
+        result.push_back( std::make_pair( simHit( ind_and_fraction.first ), ind_and_fraction.second ) );
+    }
+    return result;
 }
 
 std::pair<Index_t,float> HydraWrapper::simHitIndexAndFractionFromRecHit( std::size_t i ) const {
