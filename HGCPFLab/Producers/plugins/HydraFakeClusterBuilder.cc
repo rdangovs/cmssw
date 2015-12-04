@@ -120,7 +120,7 @@ void HydraFakeClusterBuilder::produce( Event &iEvent, const EventSetup & )
                             std::cout << "     e(track) = " << currentTrack->momentum().E() << " e(hit)=" << currentRecHit->energy();
                             std::cout << std::endl;
                         }
-                        edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( i );
+                        edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( j );
                         if ( false && debugPrint_ ) std::cout << "    energy of currentRecHitRef: " << currentRecHitRef->energy() << std::endl;
                         std::cout << "       Unsplit: we use a fraction of 1, but it's really " << result.second << std::endl;
                         reco::PFRecHitFraction rhf( currentRecHitRef, 1. ); // unsplit case
@@ -136,7 +136,7 @@ void HydraFakeClusterBuilder::produce( Event &iEvent, const EventSetup & )
                                 std::cout << "     e(track) = " << currentTrack->momentum().E() << " e(hit)=" << currentRecHit->energy();
                                 std::cout << std::endl;
                             }
-                            edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( i );
+                            edm::Ref<reco::PFRecHitCollection> currentRecHitRef = hydraObj->recHitRef( j );
                             if ( false && debugPrint_ ) std::cout << "    energy of currentRecHitRef: " << currentRecHitRef->energy() << std::endl;
                             std::cout << "     Split: fraction=" << result.second << std::endl;
                             reco::PFRecHitFraction rhf( currentRecHitRef, result.second ); // split case
