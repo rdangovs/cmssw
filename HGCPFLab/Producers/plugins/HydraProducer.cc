@@ -27,7 +27,8 @@
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCEEDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCHEDetId.h"
-#include "Geometry/FCalGeometry/interface/HGCalGeometry.h"
+#include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
+#include "SimDataFormats/CaloTest/interface/HGCalTestNumbering.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -151,16 +152,25 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             const HGCalTopology& topo = geom->topology();
             const HGCalDDDConstants& dddConst = topo.dddConstants();
       
-            int layer(simId.layer()), cell(simId.cell());
-            pair<int,int> recoLayerCell = dddConst.simToReco(cell,layer,topo.detectorType());
-            cell  = recoLayerCell.first;
-            layer = recoLayerCell.second;
-            if(layer < 0) continue;
-      
-            uint32_t recoDetId = ( ( geom == hgceeGeoHandle_.product() ) ?
-                                   (uint32_t)HGCEEDetId(ForwardSubdetector(mysubdet),simId.zside(),layer,simId.sector(),simId.subsector(),cell) :
-                                   (uint32_t)HGCHEDetId(ForwardSubdetector(mysubdet),simId.zside(),layer,simId.sector(),simId.subsector(),cell)
-                                   );
+            int layer, cell, sec, subsec, zp;
+            uint32_t intSimId = simId.rawId();
+            uint32_t recoDetId = 0;
+            if (dddConst.geomMode() == HGCalGeometryMode::Square) {
+                HGCalTestNumbering::unpackSquareIndex(intSimId, zp, layer, sec, subsec, cell);
+                if(!HGCalTestNumbering::isValidSquare(zp, layer, sec, subsec, layer)) {
+                    throw cms::Exception("BadGeometry") << "Sim DetID -> Reco DetID transform was invalid!";
+                }
+                recoDetId = ( ( geom == hgceeGeoHandle_.product() ) ?
+                              (uint32_t)HGCEEDetId(ForwardSubdetector(mysubdet),zp,layer,sec,subsec,cell) :
+                              (uint32_t)HGCHEDetId(ForwardSubdetector(mysubdet),zp,layer,sec,subsec,cell)
+                              );
+            } else {
+                //HGCalTestNumbering::unpackHexagonIndex(simId, subdet, zp, layer, sec, subsec, cell); 
+                //sec is wafer and subsec is celltype
+                recoDetId = 0;
+                throw cms::Exception("NotSupported") << "Hex-Cell HGCal not-yet supported in HyDRA!";
+            }
+                        
             reco_detIds.insert(recoDetId);
             temp_recoDetIdToSimHit.emplace(recoDetId,make_tuple(i,j,0.0f));
             std::cout << " Inserted simHit from detector " << i << " in layer " << layer << std::endl;
