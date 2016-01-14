@@ -9,6 +9,11 @@ using namespace std;
 
 namespace {
     struct dictionary {
+        
+        SimHitInfo_t shi_t;
+        BarcodeIndexPair_t bip_t;
+        BarcodePair_t bp_t;
+
         HighRapidityDevRecoAssociation hydra;
         std::vector<HighRapidityDevRecoAssociation> vec_hydra;
         edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> > wrp_vec_hydra;

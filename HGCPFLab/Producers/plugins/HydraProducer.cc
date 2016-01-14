@@ -80,7 +80,13 @@ HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     //    tokenRecoToSim_( consumes<RecoToSimCollection>( iConfig.getParameter<InputTag> ("RecoToSimCollection") ) )
 {
     inputSimHits_ = iConfig.getParameter<std::vector<InputTag> >("SimHitCollection");
+    for( const auto& tag : inputSimHits_ ) {
+        consumes<View<PCaloHit> >(tag);
+    }
     inputRecHits_ = iConfig.getParameter<std::vector<InputTag> >("HGCRecHitCollection");
+    for( const auto& tag : inputRecHits_ ) {
+        consumes<View<PFRecHit> >(tag);
+    }
     debug_ = iConfig.getUntrackedParameter<bool>("Debug",true);
 
     produces<std::vector<Hydra> >();
@@ -216,7 +222,8 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             std::cout << " i=" << i << " j=" << j << " detId=" << recHits[i]->ptrAt(j)->detId() << " subdet=" << (ForwardSubdetector)(i+3) << std::endl;
             unsigned int layer = 999;
             try {
-                layer = GetHGCLayer( recHits[i]->ptrAt(j)->detId(), (ForwardSubdetector)(i+3));
+                DetId hitid(recHits[i]->ptrAt(j)->detId());
+                layer = GetHGCLayer( hitid, (ForwardSubdetector)hitid.subdetId() );
             } catch ( const cms::Exception& e ) {
                 std::cout << "   caught exception " << e.what() << " but moving on" << std::endl;
             }
@@ -227,19 +234,20 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     for(unsigned i=0; i<GenParticleHandle->size(); i++) {
         output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));
     }
-    for(unsigned i=0; i<PFRecTrackHandle->size(); i++) {
-        output->back().insertTrack(PFRecTrackHandle->ptrAt(i));
-
-        // TODO???  RecTrack to (simulated) TrackingParticle ???
-        /*
-        RefToBase<Track> tr = PFRecTrackHandle->ptrAt(i)->trackRef();
-        const RecoToSimCollection pRecoToSim = *(rectosimCollection.product());
-        if(pRecoToSim.find(tr) != pRecoToSim.end()){
-            vector<pair<TrackingParticleRef, double> > tp = pRecoToSim[tr];
-            TrackingParticleRef tpr = tp.begin()->first;
-        */
+    if( PFRecTrackHandle.isValid() ) {
+        for(unsigned i=0; i<PFRecTrackHandle->size(); i++) {
+            output->back().insertTrack(PFRecTrackHandle->ptrAt(i));
+            
+            // TODO???  RecTrack to (simulated) TrackingParticle ???
+            /*
+              RefToBase<Track> tr = PFRecTrackHandle->ptrAt(i)->trackRef();
+              const RecoToSimCollection pRecoToSim = *(rectosimCollection.product());
+              if(pRecoToSim.find(tr) != pRecoToSim.end()){
+              vector<pair<TrackingParticleRef, double> > tp = pRecoToSim[tr];
+              TrackingParticleRef tpr = tp.begin()->first;
+            */
+        }
     }
-
 
     iEvent.put( output );
 }
