@@ -19,6 +19,8 @@
 <use   name="DataFormats/ForwardDetId"/>
 <use   name="Geometry/HGCalGeometry"/>
 <use   name="SimDataFormats/CaloTest"/>
+<use   name="CommonTools/UtilAlgos"/>
+<use   name="root"/>
 <!-- <Flags CXXFLAGS="-std=c++11"/> -->
 <flags EDM_PLUGIN="1"/>
 </library>

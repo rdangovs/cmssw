@@ -97,9 +97,9 @@ edm::Ptr<PCaloHit> HydraWrapper::simHit( std::size_t hitIndex ) const {
 
 Index_t HydraWrapper::simHitExternalIndex( std::size_t collIndex, std::size_t hitIndexInColl ) const {
     Index_t result = hitIndexInColl;
-    for ( unsigned collIndex = 0 ; collIndex < collIndex; collIndex++ ) {
-        result += m_hydraCore->m_simHitPtrs[collIndex].size();
-    }
+    for ( unsigned collIndex_it = 0 ; collIndex_it < collIndex; collIndex_it++ ) {
+        result += m_hydraCore->m_simHitPtrs[collIndex_it].size();
+    }    
     return result;
 }
 
