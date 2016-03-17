@@ -101,9 +101,9 @@ HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     tokenSimVertex_( consumes<View<SimVertex> >( iConfig.getParameter<InputTag> ("SimVertexCollection") ) )
 {
 	edm::Service<TFileService> fs; 
-	h_recHit_E_vs_simHit_E = fs->make<TH2D>("h_recHit_E_vs_simHit_E","h_recHit_E_vs_simHit_E",1000,0,0.005,1000,0,0.005);
+	h_recHit_E_vs_simHit_E = fs->make<TH2D>("h_recHit_E_vs_simHit_E","h_recHit_E_vs_simHit_E",2000,0,0.010,2000,0,0.010);
 	h_recHit_E_vs_simHit_E_FH = fs->make<TH2D>("h_recHit_E_vs_simHit_E_FH","h_recHit_E_vs_simHit_E_FH",1000,0,0.005,1000,0,0.005);
-	h_recHit_uncalibE_vs_simHit_E = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E","h_recHit_uncalibE_vs_simHit_E",1000,0,0.005,1000,0,250);
+	h_recHit_uncalibE_vs_simHit_E = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E","h_recHit_uncalibE_vs_simHit_E",2000,0,0.010,300,0,300);
 	h_recHit_uncalibE_vs_simHit_E_FH = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_FH","h_recHit_uncalibE_vs_simHit_E_FH",1000,0,0.005,1000,0,250);
     h_recLayer_vs_simLayer = fs->make<TH2D>("h_recLayer_vs_simLayer","h_recLayer_vs_simLayer",100,0,100,50,0,50);
     h_recDet_vs_simDet = fs->make<TH2D>("h_recDet_vs_simDet","h_recDet_vs_simDet",10,0,10,10,0,10);
@@ -169,7 +169,6 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
         if(debug_)std::cout << tag << std::endl;
 		uncalibRecHits.emplace_back( Handle<HGCUncalibratedRecHitCollection>() );
 		iEvent.getByLabel(tag, uncalibRecHits.back());
-
     }
 
     vector<Handle<View<PFRecHit> > > recHits;
@@ -338,11 +337,11 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
         	double e_tot = 0.0;
         	for( auto iter = range.first; iter != range.second; ++iter ) {
             	const Ptr<PCaloHit> hit = simHits[get<0>(iter->second)]->ptrAt(get<1>(iter->second));
-            	if( hit->geantTrackId() > 0 ) e_tot += hit->energy();
+            	if( hit->id() > 0 ) e_tot += hit->energy();
         	}
         	for( auto iter = range.first; iter != range.second; ++iter ) {
             	const Ptr<PCaloHit> hit = simHits[get<0>(iter->second)]->ptrAt(get<1>(iter->second));
-            	if( hit->geantTrackId() > 0 ) {
+            	if( hit->id() > 0 ) {
             		
                     HGCalDetId simId(hit->id());
             		ForwardSubdetector mysubdet = (ForwardSubdetector)(i+3);
@@ -377,8 +376,6 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
 					//float fraction = hit->energy()/e_tot;
 					float fraction = (get<2>(iter->second));
                 	std::cout << "final fraction 2 "  << fraction << std::endl;
-
-
             		make_tuple(get<0>(iter->second),get<1>(iter->second),fraction).swap(iter->second);
                     
                     DetId rechitid(recHits[i]->ptrAt(j)->detId());
@@ -397,59 +394,48 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                         h_recZ_vs_simZ->Fill(Sim_z, recId.zside());
                         
                     	h_frac->Fill((fraction));
-                    }
-					
-            		//output->back().setRecoDetIdMatchToSimHit(get<0>(iter->second),hit,detid,fraction);
-					
-                    bool amplitudeSet = false;
-            		double uncalibAmplitude = -10.;
-            
-                    //match recHit with uncalib
-                    for(unsigned k = 0; k < uncalibRecHits.size(); ++k){
-	                	for(HGCUncalibratedRecHitCollection::const_iterator itr = uncalibRecHits[k]->begin(); itr != uncalibRecHits[k]->end(); ++itr){
-                    		DetId uncDetId( DetId(itr->id()));
-                    		if(uncDetId == recHits[i]->ptrAt(j)->detId()){
-                            	uncalibAmplitude = double(itr->amplitude());
-                            	amplitudeSet = true;
-                            	break;
-                        	}              
-                    	}
-                        
-                    }
-
-
-                    if(amplitudeSet){
-
-                        
-                    	if(debug_){
-                        	std::cout << " >>> PF = " << recHits[i]->ptrAt(j)->energy() << " detId = " << recHits[i]->ptrAt(j)->detId() << std::endl;
-                    		std::cout << " >>> Uncalib = " << uncalibAmplitude << " detId = " << std::endl;
-
-                    		std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
-                    		<< " py = " << recHits[i]->ptrAt(j)->position().y()
-                            << " pz = " << recHits[i]->ptrAt(j)->position().z()
-                            << " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
-                            << " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
-                            << " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() << std::endl;
-                    
-                    	}
-                    }
-                    if((ForwardSubdetector)rechitid.subdetId()==3){
-                    	h_recHit_E_vs_simHit_E->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
-                    	h_recHit_uncalibE_vs_simHit_E->Fill(e_tot, uncalibAmplitude);
-                    		
-                    
-                    }else if((ForwardSubdetector)rechitid.subdetId()==4){
-                    	h_recHit_E_vs_simHit_E_FH->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
-						h_recHit_uncalibE_vs_simHit_E_FH->Fill(e_tot, uncalibAmplitude);
-                    }
+                    }					
+            		//output->back().setRecoDetIdMatchToSimHit(get<0>(iter->second),hit,detid,fraction);                                       
             	}
         	}
-    		
-            
             
             bool amplitudeSet = false;
             double uncalibAmplitude = -10.;
+            
+            //match recHit with uncalib
+            DetId key(recHits[i]->ptrAt(j)->detId());
+            auto iter = uncalibRecHits[i]->find(key);
+            if( iter != uncalibRecHits[i]->end() ) {
+                uncalibAmplitude = double(iter->amplitude());
+                amplitudeSet = true;
+                std::cout << "YEP YEP YEP YEP" << std::endl;
+            } else {
+                std::cout << "NOPE NOPE NOPE NOPE" << std::endl;
+            }
+            
+            if(amplitudeSet){
+                if(debug_){
+                    std::cout << " >>> PF = " << recHits[i]->ptrAt(j)->energy() << " detId = " << recHits[i]->ptrAt(j)->detId() << std::endl;
+                    std::cout << " >>> Uncalib = " << uncalibAmplitude << " detId = " << std::endl;
+                    
+                    std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
+                              << " py = " << recHits[i]->ptrAt(j)->position().y()
+                              << " pz = " << recHits[i]->ptrAt(j)->position().z()
+                              << " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
+                              << " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
+                              << " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() << std::endl;
+                    
+                }
+            }            
+            DetId rechitid(recHits[i]->ptrAt(j)->detId());
+            if((ForwardSubdetector)rechitid.subdetId()==3){
+                h_recHit_E_vs_simHit_E->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
+                h_recHit_uncalibE_vs_simHit_E->Fill(e_tot, uncalibAmplitude);                
+            }else if((ForwardSubdetector)rechitid.subdetId()==4){
+                h_recHit_E_vs_simHit_E_FH->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
+                h_recHit_uncalibE_vs_simHit_E_FH->Fill(e_tot, uncalibAmplitude);
+            }        
+            
             unsigned int layer = 999;
             int det=-1;
             try {
