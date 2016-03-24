@@ -76,12 +76,18 @@ private:
     // TODO???  RecTrack to (simulated) TrackingParticle ???
     //    inputTagtPRecoTrackAsssociation_ = iConfig.getParameter<InputTag>("tPRecoTrackAsssociation");
 
-	TH2D * h_recHit_E_vs_simHit_E;
-    TH2D * h_recHit_E_vs_simHit_E_FH;
+    std::array<TH2D*,3> h_recHit_E_vs_simHit_E;
+    std::array<TH2D*,3> h_recHit_E_vs_simHit_E_FH;
     
-	TH2D * h_recHit_uncalibE_vs_simHit_E;
-    TH2D * h_recHit_uncalibE_vs_simHit_E_FH;
+    std::array<TH2D*,3> h_recHit_uncalibE_vs_simHit_E;
+    std::array<TH2D*,3> h_recHit_uncalibE_vs_simHit_E_FH;
     
+    std::array<TH1D*,3> h_recHit_uncalibE;
+    std::array<TH1D*,3> h_recHit_uncalibE_FH;
+
+    std::array<TH1D*,3> h_simHit_E;
+    std::array<TH1D*,3> h_simHit_E_FH;
+
     TH2D * h_recLayer_vs_simLayer;
     TH2D * h_recDet_vs_simDet;
     TH2D * h_recWafer_vs_simWafer;   
@@ -89,8 +95,6 @@ private:
     TH1D * h_frac;
     TH2D * h_cType;
     TH2D * h_recZ_vs_simZ;
-    
-    
 };
 
 HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
@@ -100,11 +104,34 @@ HydraProducer::HydraProducer( const ParameterSet &iConfig ) :
     tokenSimTrack_( consumes<View<SimTrack> >( iConfig.getParameter<InputTag> ("SimTrackCollection") ) ),
     tokenSimVertex_( consumes<View<SimVertex> >( iConfig.getParameter<InputTag> ("SimVertexCollection") ) )
 {
-	edm::Service<TFileService> fs; 
-	h_recHit_E_vs_simHit_E = fs->make<TH2D>("h_recHit_E_vs_simHit_E","h_recHit_E_vs_simHit_E",2000,0,0.010,2000,0,0.010);
-	h_recHit_E_vs_simHit_E_FH = fs->make<TH2D>("h_recHit_E_vs_simHit_E_FH","h_recHit_E_vs_simHit_E_FH",1000,0,0.005,1000,0,0.005);
-	h_recHit_uncalibE_vs_simHit_E = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E","h_recHit_uncalibE_vs_simHit_E",2000,0,0.010,300,0,300);
-	h_recHit_uncalibE_vs_simHit_E_FH = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_FH","h_recHit_uncalibE_vs_simHit_E_FH",1000,0,0.005,1000,0,250);
+	edm::Service<TFileService> fs;     
+	h_recHit_E_vs_simHit_E[2] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_300","h_recHit_E_vs_simHit_E",2000,0,0.010,2000,0,0.010);
+    h_recHit_E_vs_simHit_E[1] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_200","h_recHit_E_vs_simHit_E",2000,0,0.010,2000,0,0.010);
+    h_recHit_E_vs_simHit_E[0] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_100","h_recHit_E_vs_simHit_E",2000,0,0.010,2000,0,0.010);
+	h_recHit_E_vs_simHit_E_FH[2] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_FH_300","h_recHit_E_vs_simHit_E_FH",2000,0,0.010,2000,0,0.010);
+    h_recHit_E_vs_simHit_E_FH[1] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_FH_200","h_recHit_E_vs_simHit_E_FH",2000,0,0.010,2000,0,0.010);
+    h_recHit_E_vs_simHit_E_FH[0] = fs->make<TH2D>("h_recHit_E_vs_simHit_E_FH_100","h_recHit_E_vs_simHit_E_FH",2000,0,0.010,2000,0,0.010);
+	h_recHit_uncalibE_vs_simHit_E[2] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_300","h_recHit_uncalibE_vs_simHit_E",2000,0,0.010,300,0,300);
+    h_recHit_uncalibE_vs_simHit_E[1] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_200","h_recHit_uncalibE_vs_simHit_E",2000,0,0.010,300,0,300);
+    h_recHit_uncalibE_vs_simHit_E[0] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_100","h_recHit_uncalibE_vs_simHit_E",2000,0,0.010,300,0,300);
+	h_recHit_uncalibE_vs_simHit_E_FH[2] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_FH_300","h_recHit_uncalibE_vs_simHit_E_FH",2000,0,0.010,1000,0,300);
+    h_recHit_uncalibE_vs_simHit_E_FH[1] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_FH_200","h_recHit_uncalibE_vs_simHit_E_FH",2000,0,0.010,1000,0,300);
+    h_recHit_uncalibE_vs_simHit_E_FH[0] = fs->make<TH2D>("h_recHit_uncalibE_vs_simHit_E_FH_100","h_recHit_uncalibE_vs_simHit_E_FH",2000,0,0.010,1000,0,300);
+
+    h_recHit_uncalibE[2] = fs->make<TH1D>("h_recHit_uncalibE_300","h_recHit_uncalibE",100,0,10);
+    h_recHit_uncalibE[1] = fs->make<TH1D>("h_recHit_uncalibE_200","h_recHit_uncalibE",100,0,10);
+    h_recHit_uncalibE[0] = fs->make<TH1D>("h_recHit_uncalibE_100","h_recHit_uncalibE",100,0,10);
+	h_recHit_uncalibE_FH[2] = fs->make<TH1D>("h_recHit_uncalibE_FH_300","h_recHit_uncalibE_FH",100,0,10);
+    h_recHit_uncalibE_FH[1] = fs->make<TH1D>("h_recHit_uncalibE_FH_200","h_recHit_uncalibE_FH",100,0,10);
+    h_recHit_uncalibE_FH[0] = fs->make<TH1D>("h_recHit_uncalibE_FH_100","h_recHit_uncalibE_FH",100,0,10);
+
+    h_simHit_E[2] = fs->make<TH1D>("h_simHit_E_300","h_simHit_E",100,0,0.0005);
+    h_simHit_E[1] = fs->make<TH1D>("h_simHit_E_200","h_simHit_E",100,0,0.0005);
+    h_simHit_E[0] = fs->make<TH1D>("h_simHit_E_100","h_simHit_E",100,0,0.0005);
+	h_simHit_E_FH[2] = fs->make<TH1D>("h_simHit_E_FH_300","h_simHit_E_FH",100,0,0.0005);
+    h_simHit_E_FH[1] = fs->make<TH1D>("h_simHit_E_FH_200","h_simHit_E_FH",100,0,0.0005);
+    h_simHit_E_FH[0] = fs->make<TH1D>("h_simHit_E_FH_100","h_simHit_E_FH",100,0,0.0005);
+
     h_recLayer_vs_simLayer = fs->make<TH2D>("h_recLayer_vs_simLayer","h_recLayer_vs_simLayer",100,0,100,50,0,50);
     h_recDet_vs_simDet = fs->make<TH2D>("h_recDet_vs_simDet","h_recDet_vs_simDet",10,0,10,10,0,10);
 	h_recWafer_vs_simWafer = fs->make<TH2D>("h_recWafer_vs_simWafer","h_recWafer_vs_simWafer",1000,0,1000,1000,0,1000);
@@ -328,7 +355,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     for(unsigned i=0; i<SimVertexHandle->size(); i++) {
         output->back().insertSimVertex(SimVertexHandle->ptrAt(i));
     }
-    
+
     for( unsigned i = 0; i < recHits.size(); ++i ) {
         for( unsigned j = 0; j < recHits[i]->size(); ++j ) {
             if (debug_)std::cout << " i=" << i << " j=" << j << " detId=" << recHits[i]->ptrAt(j)->detId() << " subdet=" << (ForwardSubdetector)(i+3) << std::endl;
@@ -343,35 +370,14 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             	const Ptr<PCaloHit> hit = simHits[get<0>(iter->second)]->ptrAt(get<1>(iter->second));
             	if( hit->id() > 0 ) {
             		
-                    HGCalDetId simId(hit->id());
-            		ForwardSubdetector mysubdet = (ForwardSubdetector)(i+3);
-            		const HGCalGeometry* geom = nullptr;
-            		switch(mysubdet) {
-           	 			case HGCEE:
-                		geom = hgceeGeoHandle_.product();
-                		break;
-            			case HGCHEF:
-                		geom = hgchefGeoHandle_.product();
-                		break;
-
-            			default:
-                		throw cms::Exception("InvalidDetector")
-                    		<< "Got invalid HGC subdet: " << mysubdet;
-            		}
-            
-            		const HGCalTopology& topo = geom->topology();
-            		const HGCalDDDConstants& dddConst = topo.dddConstants();
+                    HGCalDetId simId(hit->id());            		
       
             		int Sim_subdet, Sim_z, Sim_lay, Sim_wafer, Sim_celltyp, Sim_cell;
                 	int mySimsubdet=0;
                       
-             		if(dddConst.geomMode() != HGCalGeometryMode::Square){
-                
-              			HGCalTestNumbering::unpackHexagonIndex(simId, Sim_subdet, Sim_z, Sim_lay, Sim_wafer, Sim_celltyp, Sim_cell); 
-              			mySimsubdet = (ForwardSubdetector)(Sim_subdet);
-              			//sec is wafer and subsec is celltyp
-            		}
-                                           
+                    HGCalTestNumbering::unpackHexagonIndex(simId, Sim_subdet, Sim_z, Sim_lay, Sim_wafer, Sim_celltyp, Sim_cell); 
+                    mySimsubdet = (ForwardSubdetector)(Sim_subdet);
+                    
             		//std::cout << " geant4 track id = " << hit->geantTrackId()  << " sim id " << simId << std::endl;
 					//float fraction = hit->energy()/e_tot;
 					float fraction = (get<2>(iter->second));
@@ -383,7 +389,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                     HGCalDetId recId(recHits[i]->ptrAt(j)->detId());
 					int layer = recId.layer();
                     int wafTp = recId.waferType();
-                   
+                    
 					std::cout << " new fraction = " << fraction <<  "waferType " << wafTp <<  std::endl;
                     if((ForwardSubdetector)rechitid.subdetId()>0)
                     {
@@ -404,13 +410,13 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             
             //match recHit with uncalib
             DetId key(recHits[i]->ptrAt(j)->detId());
-            auto iter = uncalibRecHits[i]->find(key);
-            if( iter != uncalibRecHits[i]->end() ) {
+            auto iter = uncalibRecHits[key.subdetId()-3]->find(key);
+            if( iter != uncalibRecHits[key.subdetId()-3]->end() ) {
                 uncalibAmplitude = double(iter->amplitude());
                 amplitudeSet = true;
-                std::cout << "YEP YEP YEP YEP" << std::endl;
+                //std::cout << "YEP YEP YEP YEP" << std::endl;
             } else {
-                std::cout << "NOPE NOPE NOPE NOPE" << std::endl;
+                //std::cout << "NOPE NOPE NOPE NOPE" << std::endl;
             }
             
             if(amplitudeSet){
@@ -427,13 +433,45 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                     
                 }
             }            
-            DetId rechitid(recHits[i]->ptrAt(j)->detId());
-            if((ForwardSubdetector)rechitid.subdetId()==3){
-                h_recHit_E_vs_simHit_E->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
-                h_recHit_uncalibE_vs_simHit_E->Fill(e_tot, uncalibAmplitude);                
-            }else if((ForwardSubdetector)rechitid.subdetId()==4){
-                h_recHit_E_vs_simHit_E_FH->Fill(e_tot, recHits[i]->ptrAt(j)->energy());
-                h_recHit_uncalibE_vs_simHit_E_FH->Fill(e_tot, uncalibAmplitude);
+            const auto& hit = *(recHits[i]->ptrAt(j));
+            DetId rechitid(hit.detId());
+
+            ForwardSubdetector mysubdet = (ForwardSubdetector)rechitid.subdetId();
+            const HGCalGeometry* geom = nullptr;
+            switch(mysubdet) {
+            case HGCEE:
+                geom = hgceeGeoHandle_.product();
+                break;
+            case HGCHEF:
+                geom = hgchefGeoHandle_.product();
+                break;            
+            default:
+                throw cms::Exception("InvalidDetector")
+                    << "Got invalid HGC subdet: " << mysubdet;
+            }
+            const HGCalTopology& topo = geom->topology();
+            const HGCalDDDConstants& dddConst = topo.dddConstants();
+
+            int wafTpL = dddConst.waferTypeL(HGCalDetId(rechitid).wafer());
+            const double cos_theta = std::abs(std::cos(hit.position().theta()));
+            const double corr_e_tot = e_tot*cos_theta;
+            const double corr_uncAmpl = uncalibAmplitude*cos_theta;
+            const double corr_ehit = recHits[i]->ptrAt(j)->energy()*cos_theta;
+            if((ForwardSubdetector)rechitid.subdetId()==3){                
+                if( e_tot > 0 ) {
+                    h_recHit_E_vs_simHit_E[wafTpL-1]->Fill(corr_e_tot, corr_ehit);
+                    h_recHit_uncalibE_vs_simHit_E[wafTpL-1]->Fill(corr_e_tot, corr_uncAmpl);                
+                    h_recHit_uncalibE[wafTpL-1]->Fill(corr_uncAmpl);
+                    h_simHit_E[wafTpL-1]->Fill(corr_e_tot);
+                }
+            }else if((ForwardSubdetector)rechitid.subdetId()==4){               
+                if( e_tot > 0 ) {
+                    h_simHit_E_FH[wafTpL-1]->Fill(corr_e_tot);
+                    h_recHit_E_vs_simHit_E_FH[wafTpL-1]->Fill(corr_e_tot, corr_ehit);
+                    h_recHit_uncalibE_vs_simHit_E_FH[wafTpL-1]->Fill(corr_e_tot, corr_uncAmpl);
+                    h_recHit_uncalibE_FH[wafTpL-1]->Fill(corr_uncAmpl);
+                    h_simHit_E_FH[wafTpL-1]->Fill(corr_e_tot);
+                }
             }        
             
             unsigned int layer = 999;
@@ -446,37 +484,6 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                 if (debug_)std::cout << "   caught exception " << e.what() << " but moving on" << std::endl;
             }
             if (debug_)std::cout << " Inserted recHit from detector " << det << " in layer " << layer << std::endl;
-
-            //match recHit with uncalib
-            for(unsigned k = 0; k < uncalibRecHits.size(); ++k){
-            	for(HGCUncalibratedRecHitCollection::const_iterator itr = uncalibRecHits[k]->begin(); itr != uncalibRecHits[k]->end(); ++itr){
-					DetId uncDetId( DetId(itr->id()));
-					if(uncDetId == recHits[i]->ptrAt(j)->detId()){
-                    	uncalibAmplitude = double(itr->amplitude());
-                    	amplitudeSet = true;
-                    	break;
-                	}              
-            	}
-                
-            }
-
-
-            if(amplitudeSet){
-
-                
-            	if(debug_){std::cout << " >>> PF = " << recHits[i]->ptrAt(j)->energy() << " detId = " << recHits[i]->ptrAt(j)->detId() << std::endl;
-            		std::cout << " >>> Uncalib = " << uncalibAmplitude << " detId = " << std::endl;
-
-            		std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
-					<< " py = " << recHits[i]->ptrAt(j)->position().y()
-                    << " pz = " << recHits[i]->ptrAt(j)->position().z()
-                    << " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
-                    << " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
-                    << " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() << std::endl;
-            
-            		//            output->back().insertRecHit(i,myHit);
-            	}
-            }
             
 			output->back().insertRecHit(i,recHits[i]->ptrAt(j));
             //std::cout << "	insertRecHit "<< i << "    id " <<  recHits[i]->ptrAt(j)->detId() <<  std::endl;
