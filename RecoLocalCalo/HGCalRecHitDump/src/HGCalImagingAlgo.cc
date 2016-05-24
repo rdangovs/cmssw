@@ -282,15 +282,28 @@ std::vector<unsigned>&& HGCalImagingAlgo::findLocalMaximaInCluster(const std::ve
   return std::move(result);
 }
 
-math::XYZPoint&& HGCalImagingAlgo::calculatePositionWithFraction(const std::vector<Hexel>&,
-								 const std::vector<double>&) {
-  math::XYZPoint result;
+math::XYZPoint&& HGCalImagingAlgo::calculatePositionWithFraction(const std::vector<Hexel>& hits,
+								 const std::vector<double>& fractions) {  
+  double norm(0.0), x(0.0), y(0.0), z(0.0);
+  for( unsigned i = 0; i < hits.size(); ++i ) {
+    const double weight = fractions[i]*hits[i].weight;
+    norm += weight;
+    x += weight*hits[i].x;
+    y += weight*hits[i].y;
+    z += weight*hits[i].z;
+  }
+  math::XYZPoint result(x,y,z);
+  double norm_inv = 1.0/norm;
+  result *= norm_inv;
   return std::move(result);
 }
 
-double HGCalImagingAlgo::calculateEnergyWithFraction(const std::vector<Hexel>&,
-						     const std::vector<double>&) {
+double HGCalImagingAlgo::calculateEnergyWithFraction(const std::vector<Hexel>& hits,
+						     const std::vector<double>& fractions) {
   double result = 0.0;
+  for( unsigned i = 0 ; i < hits.size(); ++i ) {
+    result += fractions[i]*hits[i].weight;
+  }
   return result;
 }
 
