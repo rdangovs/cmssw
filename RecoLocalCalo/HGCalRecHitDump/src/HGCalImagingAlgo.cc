@@ -64,27 +64,58 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::makeClusters(
   reco::CaloID caloID = reco::CaloID::DET_HGCAL_ENDCAP;
   for (unsigned int i = 0; i < current_v.size(); i++){
     double energy = 0;
-    Point position = calculatePosition(current_v[i]);
-
+    Point position;
     std::vector< std::pair<DetId, float> > thisCluster;
-    std::vector< Hexel >::iterator it;
-    for (it = current_v[i].begin(); it != current_v[i].end(); it++)
-      {
-	energy += (*it).weight;
-	thisCluster.push_back(std::pair<DetId, float>((*it).detid,((*it).isHalo?0.:1.)));
+    
+    if( doSharing ) {
+      std::vector<unsigned> seeds = findLocalMaximaInCluster(current_v[i]);
+      std::vector<std::vector<double> > fractions;
+      shareEnergy(current_v[i],seeds,fractions);
+      
+      for( unsigned isub = 0; isub < fractions.size(); ++isub ) {
+	double effective_hits = 0.0;
+	double energy  = calculateEnergyWithFraction(current_v[i],fractions[isub]);
+	Point position = calculatePositionWithFraction(current_v[i],fractions[isub]);
+	
+	for( unsigned ihit = 0; ihit < fractions[isub].size(); ++ihit ) {
+	  const double fraction = fractions[isub][ihit];
+	  effective_hits += fraction;
+	  thisCluster.emplace_back(current_v[i][ihit].detid,fraction);
+	}
+	
+	if (verbosity < pINFO)
+	  { 
+	    std::cout << "******** NEW CLUSTER ********" << std::endl;
+	    std::cout << "No. of crystals = " << effective_hits << std::endl;
+	    std::cout << "     Energy     = " << energy << std::endl;
+	    std::cout << "     Phi        = " << position.phi() << std::endl;
+	    std::cout << "     Eta        = " << position.eta() << std::endl;
+	    std::cout << "*****************************" << std::endl;
+	  }
+	clusters_v.push_back(reco::BasicCluster(energy, position, caloID, thisCluster, 
+						reco::CaloCluster::hgcal_em));
+	thisCluster.clear();
       }
-
-    if (verbosity < pINFO)
-      { 
-	std::cout << "******** NEW CLUSTER ********" << std::endl;
-	std::cout << "No. of crystals = " << current_v.size() << std::endl;
-	std::cout << "     Energy     = " << energy << std::endl;
-	std::cout << "     Phi        = " << position.phi() << std::endl;
-	std::cout << "     Eta        = " << position.eta() << std::endl;
-	std::cout << "*****************************" << std::endl;
-    }
-    clusters_v.push_back(reco::BasicCluster(energy, position, caloID, thisCluster, 
-					    reco::CaloCluster::hgcal_em));
+    } else {
+      position = calculatePosition(current_v[i]);    
+      std::vector< Hexel >::iterator it;
+      for (it = current_v[i].begin(); it != current_v[i].end(); it++)
+	{
+	  energy += (*it).weight;
+	  thisCluster.emplace_back(std::pair<DetId, float>((*it).detid,((*it).isHalo?0.:1.)));
+	}
+      if (verbosity < pINFO)
+	{ 
+	  std::cout << "******** NEW CLUSTER ********" << std::endl;
+	  std::cout << "No. of crystals = " << current_v.size() << std::endl;
+	  std::cout << "     Energy     = " << energy << std::endl;
+	  std::cout << "     Phi        = " << position.phi() << std::endl;
+	  std::cout << "     Eta        = " << position.eta() << std::endl;
+	  std::cout << "*****************************" << std::endl;
+	}
+      clusters_v.push_back(reco::BasicCluster(energy, position, caloID, thisCluster, 
+					      reco::CaloCluster::hgcal_em));
+    }    
   }
   return clusters_v; 
 }  
