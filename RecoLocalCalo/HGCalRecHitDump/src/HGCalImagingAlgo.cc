@@ -106,7 +106,7 @@ math::XYZPoint HGCalImagingAlgo::calculatePosition(std::vector<Hexel> &v){
 			 z/total_weight );
 } 
 
-double HGCalImagingAlgo::distance(Hexel &pt1, Hexel &pt2){
+double HGCalImagingAlgo::distance(const Hexel &pt1, const Hexel &pt2){
   const GlobalPoint position1( std::move( geometry->getPosition( pt1.detid ) ) );
   const GlobalPoint position2( std::move( geometry->getPosition( pt2.detid ) ) );
   return sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2));
@@ -258,4 +258,125 @@ int HGCalImagingAlgo::findAndAssignClusters(std::vector<Hexel> &lp, double maxde
   //prepare the offset for the next layer if there is one
   cluster_offset += clusterIndex;
   return clusterIndex;
+}
+
+// find local maxima within delta_c, marking the indices in the cluster
+std::vector<unsigned>&& HGCalImagingAlgo::findLocalMaximaInCluster(const std::vector<Hexel>& cluster) {
+  std::vector<unsigned> result;
+  std::vector<bool> seed(cluster.size(),true);
+ 
+  for( unsigned i = 0; i < cluster.size(); ++i ) {    
+    for( unsigned j = 0; j < cluster.size(); ++j ) {
+      if( distance(cluster[i],cluster[j]) < delta_c && i != j) {
+	if( cluster[i].weight < cluster[j].weight ) seed[i] = false;
+      }
+    }
+  }
+
+  for( unsigned i = 0 ; i < cluster.size(); ++i ) {
+    if( seed[i] ) result.push_back(i);
+  }
+
+  std::cout << "Found " << result.size() << " sub-clusters!" << std::endl;
+
+  return std::move(result);
+}
+
+math::XYZPoint&& HGCalImagingAlgo::calculatePositionWithFraction(const std::vector<Hexel>&,
+								 const std::vector<double>&) {
+  math::XYZPoint result;
+  return std::move(result);
+}
+
+double HGCalImagingAlgo::calculateEnergyWithFraction(const std::vector<Hexel>&,
+						     const std::vector<double>&) {
+  double result = 0.0;
+  return result;
+}
+
+void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
+				   const std::vector<unsigned>& seeds, 
+				   std::vector<std::vector<double> >& outclusters) {
+  std::vector<bool> isaseed(incluster.size(),false);
+  outclusters.clear();
+  outclusters.resize(seeds.size());
+  std::vector<Point> centroids(seeds.size());
+  std::vector<double> energies(seeds.size());
+
+  // create quick seed lookup
+  for( unsigned i = 0; i < seeds.size(); ++i ) {
+    isaseed[seeds[i]] = true;
+  }
+
+  // initialize clusters to be shared
+  // centroids start off at seed positions
+  // seeds always have fraction 1.0, to stabilize fit
+  for( unsigned i = 0; i < seeds.size(); ++i ) {
+    outclusters[i].resize(incluster.size(),0.0);
+    for( unsigned j = 0; j < incluster.size(); ) {
+      if( j == seeds[i] ) {
+	outclusters[i][j] = 1.0;
+	centroids[i] = math::XYZPoint(incluster[j].x,incluster[j].y,incluster[j].z);
+	energies[i]  = incluster[j].weight; 
+      } 
+    }
+  }
+
+  // run the fit while we are less than max iterations, and clusters are still moving
+  const double minFracTot = 1e-20;
+  unsigned iter = 0;
+  const unsigned iterMax = 50;
+  double diff = std::numeric_limits<double>::max();
+  const double stoppingTolerance = 1e-8;
+  const double toleranceScaling = std::pow(std::max(1.0,seeds.size()-1.0),2.0);
+  std::vector<Point> prevCentroids;
+  while( iter++ < iterMax && diff > stoppingTolerance*toleranceScaling ) {
+    std::vector<double> frac(seeds.size()), dist2(seeds.size());
+    for( unsigned i = 0; i < incluster.size(); ++i ) {
+      const Hexel& ihit = incluster[i];
+      double fraction, fracTot(0.0), d2;
+      for( unsigned j = 0; j < seeds.size(); ++j ) {
+	fraction = 0.0;
+	d2 = ( std::pow(ihit.x - centroids[j].x(),2.0) + 
+	       std::pow(ihit.y - centroids[j].y(),2.0) + 
+	       std::pow(ihit.z - centroids[j].z(),2.0)   )/sigma2;
+	dist2[j] = d2;
+	// now we set the fractions up based on hit type
+	if( i == seeds[j] ) { // this cluster's seed
+	  fraction = 1.0;
+	} else if( isaseed[i]  ) {
+	  fraction = 0.0;
+	} else {	  
+	  fraction = energies[j]*std::exp( -0.5*d2 );
+	}
+	fracTot += fraction;	
+	frac[j] = fraction;
+      }
+      // now that we have calculated all fractions for all hits
+      // assign the new fractions
+      for( unsigned j = 0; j < seeds.size(); ++j ) {
+	if( fracTot > minFracTot || 
+	    ( i == seeds[j] && fracTot > 0.0 ) ) {
+	  outclusters[i][j] = frac[j];
+	} else {
+	  outclusters[i][j] = 0.0;
+	}	
+      }
+    }
+    
+    // save previous centroids
+    prevCentroids = std::move(centroids);
+    // finally update the position of the centroids from the last iteration
+    centroids.resize(seeds.size());
+    double diff2 = 0.0;
+    for( unsigned i = 0; i < seeds.size(); ++i ) {
+      centroids[i] = calculatePositionWithFraction(incluster,outclusters[i]);
+      energies[i]  = calculateEnergyWithFraction(incluster,outclusters[i]);
+      // calculate convergence parameters
+      const double delta2 = (prevCentroids[i]-centroids[i]).perp2();
+      if( delta2 > diff2 ) diff2 = delta2;
+    }
+    //update convergance parameter outside loop
+    diff = std::sqrt(diff2);
+  }
 }

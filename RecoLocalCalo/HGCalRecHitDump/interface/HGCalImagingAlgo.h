@@ -42,24 +42,44 @@ class HGCalImagingAlgo
   
   enum VerbosityLevel { pDEBUG = 0, pWARNING = 1, pINFO = 2, pERROR = 3 }; 
   
-  HGCalImagingAlgo() : delta_c(0.), kappa(1.), ecut(0.), cluster_offset(0),
-		       geometry(0), ddd(0), 
-		       //topology(*thetopology_p), 
-		       verbosity(pERROR), 
-		       points(maxlayer+1){
+ HGCalImagingAlgo() : delta_c(0.), kappa(1.), ecut(0.), 
+    cluster_offset(0),
+    doSharing(false), sigma2(1.0),
+    geometry(0), ddd(0), 
+    //topology(*thetopology_p), 
+    verbosity(pERROR), 
+    points(maxlayer+1){
   }
 
   HGCalImagingAlgo(double delta_c_in, double kappa_in, double ecut_in,
 		   const HGCalGeometry *thegeometry_p,
 		   //		   const CaloSubdetectorTopology *thetopology_p,
-		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), ecut(ecut_in),
-							    cluster_offset(0),
-							    geometry(thegeometry_p), 
-							    //topology(*thetopology_p), 
-							    verbosity(the_verbosity), 
-							    points(maxlayer+1){
+		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
+    ecut(ecut_in),    
+    cluster_offset(0),
+    doSharing(false),
+    sigma2(1.0),
+    geometry(thegeometry_p), 
+    //topology(*thetopology_p), 
+    verbosity(the_verbosity), 
+    points(maxlayer+1){
   }
   
+  HGCalImagingAlgo(double delta_c_in, double kappa_in, double ecut_in,
+		   double showerSigma, 
+		   const HGCalGeometry *thegeometry_p,
+		   //		   const CaloSubdetectorTopology *thetopology_p,
+		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
+    ecut(ecut_in),    
+    cluster_offset(0),
+    doSharing(true),
+    sigma2(std::pow(showerSigma,2.0)),
+    geometry(thegeometry_p), 
+    //topology(*thetopology_p), 
+    verbosity(the_verbosity), 
+    points(maxlayer+1){
+  }
+
   virtual ~HGCalImagingAlgo()
     {
     }
@@ -90,6 +110,9 @@ class HGCalImagingAlgo
   // The current offset into the temporary cluster structure
   unsigned int cluster_offset;
 
+  // for energy sharing
+  bool doSharing;
+  double sigma2; // transverse shower size
 
   // The vector of clusters
   std::vector<reco::BasicCluster> clusters_v;
@@ -108,6 +131,7 @@ class HGCalImagingAlgo
     double z;
     bool isHalfCell;
     double weight;
+    double fraction;
     DetId detid;
     double rho;
     double delta;
@@ -119,7 +143,7 @@ class HGCalImagingAlgo
 
     Hexel(const HGCRecHit &hit, DetId id_in, bool isHalf, const HGCalGeometry *geometry_in) : 
       x(0.),y(0.),z(0.),isHalfCell(isHalf),
-      weight(0.),detid(id_in), rho(0.), delta(0.),
+      weight(0.), fraction(1.0), detid(id_in), rho(0.), delta(0.),
       nearestHigher(-1), isBorder(false), isHalo(false), 
       clusterIndex(-1), geometry(geometry_in)
     {
@@ -165,11 +189,20 @@ class HGCalImagingAlgo
   //@@EM todo: the number of layers should be obtained programmatically - the range is 1-n instead of 0-n-1...
 
   //these functions should be in a helper class.
-  double distance(Hexel &pt1, Hexel &pt2); //2-d distance on the layer (x-y)
+  double distance(const Hexel &pt1, const Hexel &pt2); //2-d distance on the layer (x-y)
   double calculateLocalDensity(std::vector<Hexel> &); //return max density
   double calculateDistanceToHigher(std::vector<Hexel> &);
   int findAndAssignClusters(std::vector<Hexel> &, double);
   math::XYZPoint calculatePosition(std::vector<Hexel> &);
+
+  // attempt to find subclusters within a given set of hexels
+  std::vector<unsigned>&& findLocalMaximaInCluster(const std::vector<Hexel>&);
+  math::XYZPoint&& calculatePositionWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
+  double calculateEnergyWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
+  // outputs
+  void shareEnergy(const std::vector<Hexel>&, 
+		   const std::vector<unsigned>&,
+		   std::vector<std::vector<double> >&);
  };
 
 #endif
