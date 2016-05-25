@@ -10,8 +10,8 @@
 #include "DataFormats/CaloRecHit/interface/CaloID.h"
 
 // Return a vector of clusters from a collection of EcalRecHits:
-std::vector<reco::BasicCluster> HGCalImagingAlgo::makeClusters(
-                                  const HGCRecHitCollection& hits)
+std::vector<reco::BasicCluster> 
+HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 {
 
   const HGCalDDDConstants* ddd = &(geometry->topology().dddConstants());
@@ -69,6 +69,8 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::makeClusters(
     
     if( doSharing ) {
       std::vector<unsigned> seeds = findLocalMaximaInCluster(current_v[i]);
+      std::cout << " sharing found " << seeds.size() << " sub-cluster seeds in cluster " << i << std::endl;
+      
       std::vector<std::vector<double> > fractions;
       shareEnergy(current_v[i],seeds,fractions);
       
@@ -76,12 +78,15 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::makeClusters(
 	double effective_hits = 0.0;
 	double energy  = calculateEnergyWithFraction(current_v[i],fractions[isub]);
 	Point position = calculatePositionWithFraction(current_v[i],fractions[isub]);
-	
+
+	std::cout << "Fractions*Energies: ";
 	for( unsigned ihit = 0; ihit < fractions[isub].size(); ++ihit ) {
 	  const double fraction = fractions[isub][ihit];
+	  std::cout << fraction << "*" << current_v[i][ihit].weight << " ";
 	  effective_hits += fraction;
 	  thisCluster.emplace_back(current_v[i][ihit].detid,fraction);
 	}
+	std::cout << std::endl;
 	
 	if (verbosity < pINFO)
 	  { 
@@ -347,6 +352,12 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
   std::vector<Point> centroids(seeds.size());
   std::vector<double> energies(seeds.size());
 
+  if( seeds.size() == 1 ) { // short circuit the case of a lone cluster
+    outclusters[0].clear();
+    outclusters[0].resize(incluster.size(),1.0);    
+    return;
+  }
+
   // create quick seed lookup
   for( unsigned i = 0; i < seeds.size(); ++i ) {
     isaseed[seeds[i]] = true;
@@ -374,11 +385,11 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
   const double stoppingTolerance = 1e-8;
   const double toleranceScaling = std::pow(std::max(1.0,seeds.size()-1.0),2.0);
   std::vector<Point> prevCentroids;
-  while( iter++ < iterMax && diff > stoppingTolerance*toleranceScaling ) {
-    std::vector<double> frac(seeds.size()), dist2(seeds.size());
+  std::vector<double> frac(seeds.size()), dist2(seeds.size());
+  while( iter++ < iterMax && diff > stoppingTolerance*toleranceScaling ) {    
     for( unsigned i = 0; i < incluster.size(); ++i ) {
       const Hexel& ihit = incluster[i];
-      double fraction, fracTot(0.0), d2;
+      double fraction(0.0), fracTot(0.0), d2(0.0);
       for( unsigned j = 0; j < seeds.size(); ++j ) {
 	fraction = 0.0;
 	d2 = ( std::pow(ihit.x - centroids[j].x(),2.0) + 
@@ -401,9 +412,9 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
       for( unsigned j = 0; j < seeds.size(); ++j ) {
 	if( fracTot > minFracTot || 
 	    ( i == seeds[j] && fracTot > 0.0 ) ) {
-	  outclusters[i][j] = frac[j];
+	  outclusters[j][i] = frac[j];
 	} else {
-	  outclusters[i][j] = 0.0;
+	  outclusters[j][i] = 0.0;
 	}	
       }
     }
