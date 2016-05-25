@@ -40,6 +40,7 @@ DEFINE_FWK_MODULE(HGCalClusterTestProducer);
 
 HGCalClusterTestProducer::HGCalClusterTestProducer(const edm::ParameterSet&) {
   hits_token = consumes<HGCRecHitCollection>(edm::InputTag("HGCalRecHit:HGCEERecHits"));
+  std::cout << "Constructing HGCalClusterTestProducer" << std::endl;
 }
 
 void HGCalClusterTestProducer::produce(edm::Event& evt, 

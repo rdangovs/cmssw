@@ -196,8 +196,8 @@ class HGCalImagingAlgo
   math::XYZPoint calculatePosition(std::vector<Hexel> &);
 
   // attempt to find subclusters within a given set of hexels
-  std::vector<unsigned>&& findLocalMaximaInCluster(const std::vector<Hexel>&);
-  math::XYZPoint&& calculatePositionWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
+  std::vector<unsigned> findLocalMaximaInCluster(const std::vector<Hexel>&);
+  math::XYZPoint calculatePositionWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
   double calculateEnergyWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
   // outputs
   void shareEnergy(const std::vector<Hexel>&, 

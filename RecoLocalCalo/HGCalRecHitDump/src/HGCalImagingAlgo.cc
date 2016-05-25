@@ -29,7 +29,9 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
     {
       std::cout << "-------------------------------------------------------------" << std::endl;
       std::cout << "HGC Imaging algorithm invoked for HGEE" << std::endl;
-      std::cout << "delta_c " << delta_c << " kappa " << kappa <<std::endl;
+      std::cout << "delta_c " << delta_c << " kappa " << kappa;
+      if( doSharing ) std::cout << " showerSigma " << std::sqrt(sigma2);
+      std::cout << std::endl;
     }
 
   //loop over all hits and create the Hexel structure, skip energies below ecut
@@ -53,6 +55,7 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
   }
   //assign all hits in each layer to a cluster core or halo
   for (unsigned int i = 0; i <= 2*maxlayer+1; ++i) {
+    if( i != 15 ) continue;
     double maxdensity = calculateLocalDensity(points[i]);
     // std::cout << "layer " << i << " max density " << maxdensity 
     // 	      << " total hits " << points[i].size() << std::endl;
@@ -90,11 +93,11 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 	
 	if (verbosity < pINFO)
 	  { 
-	    std::cout << "******** NEW CLUSTER ********" << std::endl;
-	    std::cout << "No. of crystals = " << effective_hits << std::endl;
-	    std::cout << "     Energy     = " << energy << std::endl;
-	    std::cout << "     Phi        = " << position.phi() << std::endl;
-	    std::cout << "     Eta        = " << position.eta() << std::endl;
+	    std::cout << "******** NEW CLUSTER (SHARING) ********" << std::endl;
+	    std::cout << "Eff. No. of cells = " << effective_hits << std::endl;
+	    std::cout << "     Energy       = " << energy << std::endl;
+	    std::cout << "     Phi          = " << position.phi() << std::endl;
+	    std::cout << "     Eta          = " << position.eta() << std::endl;
 	    std::cout << "*****************************" << std::endl;
 	  }
 	clusters_v.push_back(reco::BasicCluster(energy, position, caloID, thisCluster, 
@@ -112,7 +115,7 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
       if (verbosity < pINFO)
 	{ 
 	  std::cout << "******** NEW CLUSTER ********" << std::endl;
-	  std::cout << "No. of crystals = " << current_v.size() << std::endl;
+	  std::cout << "No. of cells = " << current_v[i].size() << std::endl;
 	  std::cout << "     Energy     = " << energy << std::endl;
 	  std::cout << "     Phi        = " << position.phi() << std::endl;
 	  std::cout << "     Eta        = " << position.eta() << std::endl;
@@ -297,28 +300,35 @@ int HGCalImagingAlgo::findAndAssignClusters(std::vector<Hexel> &lp, double maxde
 }
 
 // find local maxima within delta_c, marking the indices in the cluster
-std::vector<unsigned>&& HGCalImagingAlgo::findLocalMaximaInCluster(const std::vector<Hexel>& cluster) {
+std::vector<unsigned> HGCalImagingAlgo::findLocalMaximaInCluster(const std::vector<Hexel>& cluster) {
   std::vector<unsigned> result;
   std::vector<bool> seed(cluster.size(),true);
  
   for( unsigned i = 0; i < cluster.size(); ++i ) {    
     for( unsigned j = 0; j < cluster.size(); ++j ) {
       if( distance(cluster[i],cluster[j]) < delta_c && i != j) {
-	if( cluster[i].weight < cluster[j].weight ) seed[i] = false;
+	std::cout << "hit-to-hit distance = " << distance(cluster[i],cluster[j]) << std::endl;
+	if( cluster[i].weight < cluster[j].weight ) {
+	  seed[i] = false;
+	  break;
+	}
       }
     }
   }
 
   for( unsigned i = 0 ; i < cluster.size(); ++i ) {
-    if( seed[i] ) result.push_back(i);
+    if( seed[i] ) {
+      std::cout << "seed at " << i << " with energy " << cluster[i].weight << std::endl;
+      result.push_back(i);
+    }
   }
 
-  std::cout << "Found " << result.size() << " sub-clusters!" << std::endl;
+  std::cout << "Found " << result.size() << " sub-clusters in input cluster of length: " << cluster.size() << std::endl;
 
-  return std::move(result);
+  return result;
 }
 
-math::XYZPoint&& HGCalImagingAlgo::calculatePositionWithFraction(const std::vector<Hexel>& hits,
+math::XYZPoint HGCalImagingAlgo::calculatePositionWithFraction(const std::vector<Hexel>& hits,
 								 const std::vector<double>& fractions) {  
   double norm(0.0), x(0.0), y(0.0), z(0.0);
   for( unsigned i = 0; i < hits.size(); ++i ) {
@@ -331,7 +341,7 @@ math::XYZPoint&& HGCalImagingAlgo::calculatePositionWithFraction(const std::vect
   math::XYZPoint result(x,y,z);
   double norm_inv = 1.0/norm;
   result *= norm_inv;
-  return std::move(result);
+  return result;
 }
 
 double HGCalImagingAlgo::calculateEnergyWithFraction(const std::vector<Hexel>& hits,
@@ -358,17 +368,22 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     return;
   }
 
+  std::cout << "saving seeds" << std::endl;
+
   // create quick seed lookup
   for( unsigned i = 0; i < seeds.size(); ++i ) {
     isaseed[seeds[i]] = true;
   }
 
+  std::cout << "seeds saved" << std::endl;
+
   // initialize clusters to be shared
   // centroids start off at seed positions
   // seeds always have fraction 1.0, to stabilize fit
+  std::cout << "initializing fit" << std::endl;
   for( unsigned i = 0; i < seeds.size(); ++i ) {
     outclusters[i].resize(incluster.size(),0.0);
-    for( unsigned j = 0; j < incluster.size(); ) {
+    for( unsigned j = 0; j < incluster.size(); ++j ) {
       if( j == seeds[i] ) {
 	outclusters[i][j] = 1.0;
 	centroids[i] = math::XYZPoint(incluster[j].x,incluster[j].y,incluster[j].z);
@@ -376,6 +391,8 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
       } 
     }
   }
+
+  std::cout << "fit initialized" << std::endl;
 
   // run the fit while we are less than max iterations, and clusters are still moving
   const double minFracTot = 1e-20;
@@ -412,7 +429,7 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
       for( unsigned j = 0; j < seeds.size(); ++j ) {
 	if( fracTot > minFracTot || 
 	    ( i == seeds[j] && fracTot > 0.0 ) ) {
-	  outclusters[j][i] = frac[j];
+	  outclusters[j][i] = frac[j]/fracTot;
 	} else {
 	  outclusters[j][i] = 0.0;
 	}	
@@ -433,5 +450,6 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     }
     //update convergance parameter outside loop
     diff = std::sqrt(diff2);
+    std::cout << " iteration = " << iter << " diff = " << diff << std::endl;
   }
 }
