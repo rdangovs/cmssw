@@ -427,9 +427,10 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
                     std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
                               << " py = " << recHits[i]->ptrAt(j)->position().y()
                               << " pz = " << recHits[i]->ptrAt(j)->position().z()
-                              << " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
-                              << " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
-                              << " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() << std::endl;
+                        //<< " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
+                        //<< " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
+                        //<< " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() 
+                              << std::endl;
                     
                 }
             }            
