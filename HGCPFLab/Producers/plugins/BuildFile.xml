@@ -1,0 +1,26 @@
+<library name="HGCPFLabPlugins" file="*.cc">
+<use   name="FWCore/Framework"/>
+<use   name="FWCore/PluginManager"/>
+<use   name="FWCore/ParameterSet"/>
+<use   name="HGCPFLab/DataFormats"/>
+<use   name="DataFormats/Common"/>
+<use   name="DataFormats/HepMCCandidate"/>
+<use   name="SimDataFormats/Track"/>
+<use   name="SimDataFormats/Vertex"/>
+<use   name="SimDataFormats/CaloHit"/>
+<use   name="FWCore/Utilities"/>
+<use   name="DataFormats/ParticleFlowReco"/>
+<use   name="DataFormats/ParticleFlowCandidate"/>
+<use   name="Geometry/CaloGeometry"/>
+<use   name="Geometry/Records"/>
+<use   name="Geometry/EcalAlgo"/>
+<use   name="Geometry/CaloTopology"/>
+<use   name="Geometry/HcalTowerAlgo"/>
+<use   name="DataFormats/ForwardDetId"/>
+<use   name="Geometry/HGCalGeometry"/>
+<use   name="SimDataFormats/CaloTest"/>
+<use   name="CommonTools/UtilAlgos"/>
+<use   name="root"/>
+<!-- <Flags CXXFLAGS="-std=c++11"/> -->
+<flags EDM_PLUGIN="1"/>
+</library>
