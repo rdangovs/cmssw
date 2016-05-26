@@ -47,6 +47,9 @@ HGCalClusterTestProducer::HGCalClusterTestProducer(const edm::ParameterSet&) {
   hydraTokens[1] = consumes<std::vector<reco::PFCluster> >( edm::InputTag("FakeClusterCaloFace") );
 
   std::cout << "Constructing HGCalClusterTestProducer" << std::endl;
+
+  produces<std::vector<reco::BasicCluster> >();
+  produces<std::vector<reco::BasicCluster> >("sharing");
 }
 
 void HGCalClusterTestProducer::produce(edm::Event& evt, 
@@ -72,11 +75,15 @@ void HGCalClusterTestProducer::produce(edm::Event& evt,
   edm::Handle<HGCRecHitCollection> ee_hits;
   evt.getByToken(hits_token,ee_hits);
   
-  auto clusters = alg_no_sharing.makeClusters(*ee_hits);
-  auto clusters_sharing = alg_sharing.makeClusters(*ee_hits);
+  std::unique_ptr<std::vector<reco::BasicCluster> > clusters( new std::vector<reco::BasicCluster> ), 
+    clusters_sharing( new std::vector<reco::BasicCluster> );
+  
 
-  std::cout << "Density based cluster size: " << clusters.size() << std::endl;
-  std::cout << "Sharing clusters size     : " << clusters_sharing.size() << std::endl;
+  *clusters = alg_no_sharing.makeClusters(*ee_hits);
+  *clusters_sharing = alg_sharing.makeClusters(*ee_hits);
+
+  std::cout << "Density based cluster size: " << clusters->size() << std::endl;
+  std::cout << "Sharing clusters size     : " << clusters_sharing->size() << std::endl;
   
   edm::Handle<std::vector<reco::PFCluster> > hydra[2];
   std::vector<std::string> names;
@@ -87,7 +94,8 @@ void HGCalClusterTestProducer::produce(edm::Event& evt,
     std::cout << "hydra " << names[i] << " size : " << hydra[i]->size() << std::endl;
   }
 
-
+  evt.put(std::move(clusters));
+  evt.put(std::move(clusters_sharing),"sharing");
 }
 
 #endif
