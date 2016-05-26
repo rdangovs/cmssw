@@ -64,11 +64,9 @@ IndexPair_t HydraWrapper::recHitInternalIndices( std::size_t hitIndex ) const {
 
 edm::Ref<reco::PFRecHitCollection> HydraWrapper::recHitRef( std::size_t i ) const {
     edm::Ptr<reco::PFRecHit> recHitPtr = recHit( i );
-    IndexPair_t indices = recHitInternalIndices( i );
-    assert(!recHitPtr.isTransient());
-    edm::EDProductGetter const* getter = m_hydraCore->m_recHitPtrs[indices.first].productGetter();
-    assert(getter);
-    return edm::Ref<reco::PFRecHitCollection>(recHitPtr.id(), recHitPtr.key(), getter);
+    //IndexPair_t indices = recHitInternalIndices( i );
+    assert(!recHitPtr.isTransient());    
+    return edm::Ref<reco::PFRecHitCollection>(recHitPtr.id(), recHitPtr.get(), recHitPtr.key());
 }
 
 std::size_t HydraWrapper::simHitSize() const {

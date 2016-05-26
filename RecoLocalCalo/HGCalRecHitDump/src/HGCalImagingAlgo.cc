@@ -72,7 +72,7 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
     
     if( doSharing ) {
       std::vector<unsigned> seeds = findLocalMaximaInCluster(current_v[i]);
-      std::cout << " sharing found " << seeds.size() << " sub-cluster seeds in cluster " << i << std::endl;
+      //std::cout << " sharing found " << seeds.size() << " sub-cluster seeds in cluster " << i << std::endl;
       
       std::vector<std::vector<double> > fractions;
       shareEnergy(current_v[i],seeds,fractions);
@@ -81,15 +81,15 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 	double effective_hits = 0.0;
 	double energy  = calculateEnergyWithFraction(current_v[i],fractions[isub]);
 	Point position = calculatePositionWithFraction(current_v[i],fractions[isub]);
-
-	std::cout << "Fractions*Energies: ";
+	
+	//std::cout << "Fractions*Energies: ";
 	for( unsigned ihit = 0; ihit < fractions[isub].size(); ++ihit ) {
 	  const double fraction = fractions[isub][ihit];
-	  std::cout << fraction << "*" << current_v[i][ihit].weight << " ";
+	  //std::cout << fraction << "*" << current_v[i][ihit].weight << " ";
 	  effective_hits += fraction;
 	  thisCluster.emplace_back(current_v[i][ihit].detid,fraction);
 	}
-	std::cout << std::endl;
+	//std::cout << std::endl;
 	
 	if (verbosity < pINFO)
 	  { 
@@ -307,7 +307,7 @@ std::vector<unsigned> HGCalImagingAlgo::findLocalMaximaInCluster(const std::vect
   for( unsigned i = 0; i < cluster.size(); ++i ) {    
     for( unsigned j = 0; j < cluster.size(); ++j ) {
       if( distance(cluster[i],cluster[j]) < delta_c && i != j) {
-	std::cout << "hit-to-hit distance = " << distance(cluster[i],cluster[j]) << std::endl;
+	//std::cout << "hit-to-hit distance = " << distance(cluster[i],cluster[j]) << std::endl;
 	if( cluster[i].weight < cluster[j].weight ) {
 	  seed[i] = false;
 	  break;
@@ -318,12 +318,12 @@ std::vector<unsigned> HGCalImagingAlgo::findLocalMaximaInCluster(const std::vect
 
   for( unsigned i = 0 ; i < cluster.size(); ++i ) {
     if( seed[i] ) {
-      std::cout << "seed at " << i << " with energy " << cluster[i].weight << std::endl;
+      //std::cout << "seed at " << i << " with energy " << cluster[i].weight << std::endl;
       result.push_back(i);
     }
   }
 
-  std::cout << "Found " << result.size() << " sub-clusters in input cluster of length: " << cluster.size() << std::endl;
+  //std::cout << "Found " << result.size() << " sub-clusters in input cluster of length: " << cluster.size() << std::endl;
 
   return result;
 }
@@ -368,19 +368,19 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     return;
   }
 
-  std::cout << "saving seeds" << std::endl;
+  //std::cout << "saving seeds" << std::endl;
 
   // create quick seed lookup
   for( unsigned i = 0; i < seeds.size(); ++i ) {
     isaseed[seeds[i]] = true;
   }
 
-  std::cout << "seeds saved" << std::endl;
+  //std::cout << "seeds saved" << std::endl;
 
   // initialize clusters to be shared
   // centroids start off at seed positions
   // seeds always have fraction 1.0, to stabilize fit
-  std::cout << "initializing fit" << std::endl;
+  //std::cout << "initializing fit" << std::endl;
   for( unsigned i = 0; i < seeds.size(); ++i ) {
     outclusters[i].resize(incluster.size(),0.0);
     for( unsigned j = 0; j < incluster.size(); ++j ) {
@@ -392,7 +392,7 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     }
   }
 
-  std::cout << "fit initialized" << std::endl;
+  //std::cout << "fit initialized" << std::endl;
 
   // run the fit while we are less than max iterations, and clusters are still moving
   const double minFracTot = 1e-20;
@@ -450,6 +450,6 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     }
     //update convergance parameter outside loop
     diff = std::sqrt(diff2);
-    std::cout << " iteration = " << iter << " diff = " << diff << std::endl;
+    //std::cout << " iteration = " << iter << " diff = " << diff << std::endl;
   }
 }

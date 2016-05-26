@@ -25,6 +25,8 @@
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
 #include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
 
+#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
+
 class HGCalClusterTestProducer : public edm::stream::EDProducer<> {
  public:    
   HGCalClusterTestProducer(const edm::ParameterSet&);
@@ -34,12 +36,16 @@ class HGCalClusterTestProducer : public edm::stream::EDProducer<> {
   
  private:
   edm::EDGetTokenT<HGCRecHitCollection> hits_token;
+  edm::EDGetTokenT<std::vector<reco::PFCluster> > hydraTokens[2];
 };
 
 DEFINE_FWK_MODULE(HGCalClusterTestProducer);
 
 HGCalClusterTestProducer::HGCalClusterTestProducer(const edm::ParameterSet&) {
   hits_token = consumes<HGCRecHitCollection>(edm::InputTag("HGCalRecHit:HGCEERecHits"));
+  hydraTokens[0] = consumes<std::vector<reco::PFCluster> >( edm::InputTag("FakeClusterGen") );
+  hydraTokens[1] = consumes<std::vector<reco::PFCluster> >( edm::InputTag("FakeClusterCaloFace") );
+
   std::cout << "Constructing HGCalClusterTestProducer" << std::endl;
 }
 
@@ -68,6 +74,19 @@ void HGCalClusterTestProducer::produce(edm::Event& evt,
   
   auto clusters = alg_no_sharing.makeClusters(*ee_hits);
   auto clusters_sharing = alg_sharing.makeClusters(*ee_hits);
+
+  std::cout << "Density based cluster size: " << clusters.size() << std::endl;
+  std::cout << "Sharing clusters size     : " << clusters_sharing.size() << std::endl;
+  
+  edm::Handle<std::vector<reco::PFCluster> > hydra[2];
+  std::vector<std::string> names;
+  names.push_back(std::string("gen"));
+  names.push_back(std::string("calo_face"));
+  for( unsigned i = 0 ; i < 2; ++i ) {
+    evt.getByToken(hydraTokens[i],hydra[i]);
+    std::cout << "hydra " << names[i] << " size : " << hydra[i]->size() << std::endl;
+  }
+
 
 }
 

@@ -300,7 +300,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
         for( auto iter = range.first; iter != range.second; ++iter ) {
             const Ptr<PCaloHit> hit = simHits[get<0>(iter->second)]->ptrAt(get<1>(iter->second));
             if( hit->geantTrackId() > 0 ) e_tot += hit->energy();
-            std::cout << " good fraction " << get<2>(iter->second) << std::endl;
+            //std::cout << " good fraction " << get<2>(iter->second) << std::endl;
         }
         for( auto iter = range.first; iter != range.second; ++iter ) {
             const Ptr<PCaloHit> hit = simHits[get<0>(iter->second)]->ptrAt(get<1>(iter->second));
@@ -309,7 +309,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             	//std::cout << " geant4 track id = " << hit->geantTrackId()  << " sim id " << simId << std::endl;
                 float fraction = hit->energy()/e_tot;
 				float cellSize = (get<2>(iter->second));
-                std::cout << "final fraction " <<  cellSize <<" , " << fraction << " , "<< (cellSize + fraction) << std::endl;
+                //std::cout << "final fraction " <<  cellSize <<" , " << fraction << " , "<< (cellSize + fraction) << std::endl;
 
                 make_tuple(get<0>(iter->second),get<1>(iter->second),(cellSize + fraction)).swap(iter->second);
 
@@ -381,16 +381,16 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             		//std::cout << " geant4 track id = " << hit->geantTrackId()  << " sim id " << simId << std::endl;
 					//float fraction = hit->energy()/e_tot;
 					float fraction = (get<2>(iter->second));
-                	std::cout << "final fraction 2 "  << fraction << std::endl;
+                	//std::cout << "final fraction 2 "  << fraction << std::endl;
             		make_tuple(get<0>(iter->second),get<1>(iter->second),fraction).swap(iter->second);
                     
                     DetId rechitid(recHits[i]->ptrAt(j)->detId());
                     
                     HGCalDetId recId(recHits[i]->ptrAt(j)->detId());
 					int layer = recId.layer();
-                    int wafTp = recId.waferType();
+                    //int wafTp = recId.waferType();
                     
-					std::cout << " new fraction = " << fraction <<  "waferType " << wafTp <<  std::endl;
+					//std::cout << " new fraction = " << fraction <<  "waferType " << wafTp <<  std::endl;
                     if((ForwardSubdetector)rechitid.subdetId()>0)
                     {
                     	h_recLayer_vs_simLayer->Fill(Sim_lay,layer);
@@ -421,16 +421,16 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             
             if(amplitudeSet){
                 if(debug_){
-                    std::cout << " >>> PF = " << recHits[i]->ptrAt(j)->energy() << " detId = " << recHits[i]->ptrAt(j)->detId() << std::endl;
-                    std::cout << " >>> Uncalib = " << uncalibAmplitude << " detId = " << std::endl;
+                    //std::cout << " >>> PF = " << recHits[i]->ptrAt(j)->energy() << " detId = " << recHits[i]->ptrAt(j)->detId() << std::endl;
+                    //std::cout << " >>> Uncalib = " << uncalibAmplitude << " detId = " << std::endl;
                     
-                    std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
-                              << " py = " << recHits[i]->ptrAt(j)->position().y()
-                              << " pz = " << recHits[i]->ptrAt(j)->position().z()
+                    //std::cout << " px = " << recHits[i]->ptrAt(j)->position().x() 
+                    //        << " py = " << recHits[i]->ptrAt(j)->position().y()
+                    //        << " pz = " << recHits[i]->ptrAt(j)->position().z()
                         //<< " Ax = " << recHits[i]->ptrAt(j)->getAxisXYZ().X() 
                         //<< " Ay = " << recHits[i]->ptrAt(j)->getAxisXYZ().Y() 
                         //<< " Az = " << recHits[i]->ptrAt(j)->getAxisXYZ().Z() 
-                              << std::endl;
+                    //<< std::endl;
                     
                 }
             }            
@@ -503,6 +503,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
     for(unsigned i=0; i<GenParticleHandle->size(); i++) {
         output->back().insertGenParticle(GenBarcodeHandle->at(i),GenParticleHandle->ptrAt(i));
     }
+    
     if( PFRecTrackHandle.isValid() ) {
         for(unsigned i=0; i<PFRecTrackHandle->size(); i++) {
             output->back().insertTrack(PFRecTrackHandle->ptrAt(i));
