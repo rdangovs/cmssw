@@ -2,7 +2,7 @@
 #define _HGCROIAnalyzer_h_
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/stream/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESTransientHandle.h"
@@ -27,14 +27,37 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecHitFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFRecHitFraction.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/ParticleFlowReco/interface/PFBlockFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFBlock.h"
+#include "DataFormats/ParticleFlowReco/interface/PFBlockElementCluster.h"
+#include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
+#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "SimDataFormats/Track/interface/SimTrack.h"
+#include "SimDataFormats/Vertex/interface/SimVertex.h"
+
+#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
+#include "SimDataFormats/CaloHit/interface/PCaloHitContainer.h"
+#include "SimG4CMS/Calo/interface/CaloHitID.h"
+#include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
+#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+
 #include <unordered_map>
 
 /**
    @class HGCROIAnalyzer
    @author P. Silva (CERN)
+   @author L. Gray  (FNAL)
 */
 
-class HGCROIAnalyzer : public edm::EDAnalyzer 
+class HGCROIAnalyzer : public edm::stream::EDAnalyzer<>
 {  
  public:
   
@@ -68,12 +91,19 @@ class HGCROIAnalyzer : public edm::EDAnalyzer
   std::vector<SlimmedVertex> *slimmedVertices_;
   TLorentzVector *genVertex_;
   
-  bool useSuperClustersAsROIs_,useStatus3ForGenVertex_;
-  std::string eeSimHitsSource_, hefSimHitsSource_;
-  std::string eeRecHitsSource_, hefRecHitsSource_;
-  std::string g4TracksSource_, g4VerticesSource_;
-  std::string recoVertexSource_;
-  std::string genSource_, genCandsFromSimTracksSource_, genJetsSource_, pfJetsSource_, superClustersSource_;
+  bool useSuperClustersAsROIs_,useStatus3ForGenVertex_, useStatus3AsROIs_;
+  edm::EDGetTokenT<edm::PCaloHitContainer> eeSimHitsSource_, hefSimHitsSource_;
+  edm::EDGetTokenT<HGCRecHitCollection> eeRecHitsSource_, hefRecHitsSource_;
+  edm::EDGetTokenT<std::vector<SimTrack> > g4TracksSource_;
+  edm::EDGetTokenT<std::vector<SimVertex> > g4VerticesSource_;
+  edm::EDGetTokenT<reco::VertexCollection> recoVertexSource_;
+  edm::EDGetTokenT<edm::View<reco::Candidate> > genSource_;
+  edm::EDGetTokenT<reco::GenParticleCollection> genCandsFromSimTracksSource_;
+  edm::EDGetTokenT<reco::GenJetCollection> genJetsSource_;
+  edm::EDGetTokenT<std::vector<int> > genBarcodesSource_;
+  edm::EDGetTokenT<std::vector<reco::PFJet> > pfJetsSource_;
+  edm::EDGetTokenT<reco::SuperClusterCollection> superClustersSource_;
+  edm::EDGetTokenT<edm::HepMCProduct> hepmceventSource_;
 };
  
 

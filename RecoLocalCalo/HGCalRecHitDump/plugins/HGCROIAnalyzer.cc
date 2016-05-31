@@ -3,30 +3,9 @@
 #include "RecoLocalCalo/HGCalRecHitDump/interface/HGCAnalysisTools.h"
 #include "RecoLocalCalo/HGCalRecHitDump/interface/PCAShowerAnalysis.h"
 
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
-#include "DataFormats/Math/interface/deltaR.h"
-#include "DataFormats/ParticleFlowReco/interface/PFRecHitFwd.h"
-#include "DataFormats/ParticleFlowReco/interface/PFRecHitFraction.h"
-#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
-#include "DataFormats/ParticleFlowReco/interface/PFBlockFwd.h"
-#include "DataFormats/ParticleFlowReco/interface/PFBlock.h"
-#include "DataFormats/ParticleFlowReco/interface/PFBlockElementCluster.h"
-#include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
-#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "DataFormats/VertexReco/interface/Vertex.h"
-
-#include "SimDataFormats/CaloHit/interface/PCaloHit.h"
-#include "SimDataFormats/CaloHit/interface/PCaloHitContainer.h"
-#include "SimG4CMS/Calo/interface/CaloHitID.h"
-#include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
-
 #include "DetectorDescription/OfflineDBLoader/interface/GeometryInfoDump.h"
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
 #include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
-
-#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 
 #include <iostream>
 
@@ -40,23 +19,27 @@ HGCROIAnalyzer::HGCROIAnalyzer( const edm::ParameterSet &iConfig ) :
   slimmedVertices_(new std::vector<SlimmedVertex>),
   genVertex_(new TLorentzVector),
   useSuperClustersAsROIs_(false),
-  useStatus3ForGenVertex_(false)
+  useStatus3ForGenVertex_(false),
+  useStatus3AsROIs_(false)
 {
   //configure analyzer
-  g4TracksSource_   = iConfig.getUntrackedParameter< std::string >("g4TracksSource");
-  g4VerticesSource_ = iConfig.getUntrackedParameter< std::string >("g4VerticesSource");
-  genSource_        = iConfig.getUntrackedParameter< std::string >("genSource");
-  genCandsFromSimTracksSource_ = iConfig.getUntrackedParameter< std::string >("genCandsFromSimTracksSource");
-  genJetsSource_    = iConfig.getUntrackedParameter<std::string>("genJetsSource");
-  recoVertexSource_ = iConfig.getUntrackedParameter<std::string>("recoVertexSource");
-  useSuperClustersAsROIs_ = iConfig.getUntrackedParameter<bool>("useSuperClustersAsROIs");
-  useStatus3ForGenVertex_ = iConfig.getUntrackedParameter<bool>("useStatus3ForGenVertex");
-  superClustersSource_ = iConfig.getUntrackedParameter<std::string>("superClustersSource");
-  pfJetsSource_     = iConfig.getUntrackedParameter< std::string >("pfJetsSource");
-  eeSimHitsSource_  = iConfig.getUntrackedParameter< std::string >("eeSimHitsSource");
-  hefSimHitsSource_ = iConfig.getUntrackedParameter< std::string >("hefSimHitsSource");
-  eeRecHitsSource_  = iConfig.getUntrackedParameter< std::string >("eeRecHitsSource");
-  hefRecHitsSource_ = iConfig.getUntrackedParameter< std::string >("hefRecHitsSource");
+  g4TracksSource_    = consumes<std::vector<SimTrack> >(iConfig.getParameter< edm::InputTag >("g4TracksSource"));
+  g4VerticesSource_  = consumes<std::vector<SimVertex> >(iConfig.getParameter< edm::InputTag >("g4VerticesSource"));
+  genSource_         = consumes<edm::View<reco::Candidate> >(iConfig.getParameter< edm::InputTag >("genSource"));
+  genBarcodesSource_ = consumes<std::vector<int> >(iConfig.getParameter< edm::InputTag >("genSource"));
+  genCandsFromSimTracksSource_ = consumes<reco::GenParticleCollection>(iConfig.getParameter< edm::InputTag >("genCandsFromSimTracksSource"));
+  genJetsSource_    = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsSource"));
+  recoVertexSource_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("recoVertexSource"));
+  useSuperClustersAsROIs_ = iConfig.getParameter<bool>("useSuperClustersAsROIs");
+  useStatus3ForGenVertex_ = iConfig.getParameter<bool>("useStatus3ForGenVertex");
+  useStatus3AsROIs_        = iConfig.getParameter<bool>("useStatus3AsROIs");
+  superClustersSource_ = consumes<reco::SuperClusterCollection>(iConfig.getParameter<edm::InputTag>("superClustersSource"));
+  pfJetsSource_     = consumes<std::vector<reco::PFJet> >(iConfig.getParameter< edm::InputTag >("pfJetsSource"));
+  eeSimHitsSource_  = consumes<edm::PCaloHitContainer>(iConfig.getParameter< edm::InputTag >("eeSimHitsSource"));
+  hefSimHitsSource_ = consumes<edm::PCaloHitContainer>(iConfig.getParameter< edm::InputTag >("hefSimHitsSource"));
+  eeRecHitsSource_  = consumes<HGCRecHitCollection>(iConfig.getParameter< edm::InputTag >("eeRecHitsSource"));
+  hefRecHitsSource_ = consumes<HGCRecHitCollection>(iConfig.getParameter< edm::InputTag >("hefRecHitsSource"));
+  hepmceventSource_ = consumes<edm::HepMCProduct>(iConfig.getParameter< edm::InputTag >("hepmceventSource"));
 
   edm::Service<TFileService> fs;
   tree_=fs->make<TTree>("HGC","HGC");
@@ -84,9 +67,9 @@ void HGCROIAnalyzer::slimRecHits(const edm::Event &iEvent, const edm::EventSetup
   
   //EE hits
   edm::Handle<edm::PCaloHitContainer> eeSimHits;
-  iEvent.getByLabel(edm::InputTag("g4SimHits",eeSimHitsSource_), eeSimHits);
+  iEvent.getByToken(eeSimHitsSource_, eeSimHits);
   edm::Handle<HGCRecHitCollection> eeRecHits;
-  iEvent.getByLabel(edm::InputTag("HGCalRecHit",eeRecHitsSource_),eeRecHits); // change to uncalib rechits
+  iEvent.getByToken(eeRecHitsSource_,eeRecHits); // change to uncalib rechits
 
   if(eeRecHits.isValid())
     {
@@ -147,9 +130,9 @@ void HGCROIAnalyzer::slimRecHits(const edm::Event &iEvent, const edm::EventSetup
   
   //HEF hits
   edm::Handle<edm::PCaloHitContainer> hefSimHits;
-  iEvent.getByLabel(edm::InputTag("g4SimHits",hefSimHitsSource_), hefSimHits);
+  iEvent.getByToken(hefSimHitsSource_, hefSimHits);
   edm::Handle<HGCRecHitCollection> hefRecHits;
-  iEvent.getByLabel(edm::InputTag("HGCalRecHit",hefRecHitsSource_),hefRecHits); // change to uncalib rechits
+  iEvent.getByToken(hefRecHitsSource_, hefRecHits); // change to uncalib rechits
   if(hefRecHits.isValid())
     {
       edm::ESHandle<HGCalGeometry> hefGeom;
@@ -355,15 +338,15 @@ void HGCROIAnalyzer::analyze(const edm::Event &iEvent, const edm::EventSetup &iS
 
   //Geant4 collections
   edm::Handle<std::vector<SimTrack> > SimTk;
-  iEvent.getByLabel(g4TracksSource_,SimTk);
+  iEvent.getByToken(g4TracksSource_,SimTk);
   edm::Handle<std::vector<SimVertex> > SimVtx;
-  iEvent.getByLabel(g4VerticesSource_,SimVtx); 
+  iEvent.getByToken(g4VerticesSource_,SimVtx); 
   edm::Handle<std::vector<int> > genBarcodes;
-  iEvent.getByLabel("genParticles",genBarcodes);  
+  iEvent.getByToken(genBarcodesSource_, genBarcodes);  
 
   //PV collection 
   edm::Handle<reco::VertexCollection> vtxH;
-  iEvent.getByLabel(recoVertexSource_, vtxH);
+  iEvent.getByToken(recoVertexSource_, vtxH);
   slimmedVertices_->clear();
   std::vector<size_t> selVtx;
   for(size_t iv=0; iv<vtxH->size(); iv++)
@@ -377,13 +360,13 @@ void HGCROIAnalyzer::analyze(const edm::Event &iEvent, const edm::EventSetup &iS
   
   // get the gen particles
   edm::Handle<edm::View<reco::Candidate> > genParticles;
-  iEvent.getByLabel(edm::InputTag(genSource_), genParticles);
+  iEvent.getByToken(genSource_, genParticles);
   edm::Handle<reco::GenParticleCollection> genCandsFromSimTracks;
-  iEvent.getByLabel(edm::InputTag(genCandsFromSimTracksSource_), genCandsFromSimTracks);
+  iEvent.getByToken(genCandsFromSimTracksSource_, genCandsFromSimTracks);
 
   // get the vertex info
   edm::Handle<edm::HepMCProduct>  hepmcevent;
-  iEvent.getByLabel(edm::InputTag("generator"), hepmcevent);
+  iEvent.getByToken(hepmceventSource_, hepmcevent);
   const HepMC::GenEvent& genevt = hepmcevent->getHepMCData();
   genVertex_->SetXYZT(0.,0.,0.,0.);
   if( genevt.vertices_size() ) {
@@ -393,14 +376,19 @@ void HGCROIAnalyzer::analyze(const edm::Event &iEvent, const edm::EventSetup &iS
   
   //jet analysis
   edm::Handle<std::vector<reco::PFJet> > pfJets;
-  iEvent.getByLabel(edm::InputTag(pfJetsSource_),pfJets);
+  iEvent.getByToken(pfJetsSource_,pfJets);
   edm::Handle<reco::SuperClusterCollection> superClusters;
-  iEvent.getByLabel(edm::InputTag(superClustersSource_,""),superClusters);
+  iEvent.getByToken(superClustersSource_,superClusters);
   edm::Handle<reco::GenJetCollection> genJets;
-  iEvent.getByLabel(edm::InputTag(genJetsSource_), genJets);
+  iEvent.getByToken(genJetsSource_, genJets);
   std::unordered_map<uint32_t,uint32_t> reco2genJet,genJet2Parton,genJet2Stable;
-  if(useSuperClustersAsROIs_) doMCJetMatching(superClusters,genJets,genParticles,reco2genJet,genJet2Parton,genJet2Stable);
-  else                        doMCJetMatching(pfJets,genJets,genParticles,reco2genJet,genJet2Parton,genJet2Stable);
+  if(useSuperClustersAsROIs_) {
+    doMCJetMatching(superClusters,genJets,genParticles,reco2genJet,genJet2Parton,genJet2Stable);
+  } else if (useStatus3AsROIs_) {
+     //doParticleMatching(superClusters,genJets,genParticles,reco2genJet,genJet2Parton,genJet2Stable);
+  } else {
+    doMCJetMatching(pfJets,genJets,genParticles,reco2genJet,genJet2Parton,genJet2Stable);
+  }
 
   //
   // Analyze reco jets fiducial in HGC
