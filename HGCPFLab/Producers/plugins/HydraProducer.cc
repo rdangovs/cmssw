@@ -281,8 +281,8 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
             //std::cout << " cel longitudinal size =  "<< celTypeL  << std::endl;
             temp_recoDetIdToSimHit.emplace(recoDetId,make_tuple(i,j,cellTypeL));
             unordered_multimap<uint32_t,tuple<unsigned,unsigned,float> >::const_iterator it;
-            if (debug_)std::cout << " Inserted simHit from detector " << i << " cobined with recHit "<< j <<" recoDetId = " << recoDetId << " in layer " << layer << "  cellTypeL"<< cellTypeL << std::endl;
-			std::cout << cellTypeL << "\n";
+            if (debug_) std::cout << " Inserted simHit from detector " << i << " cobined with recHit "<< j <<" recoDetId = " << recoDetId << " in layer " << layer << "  cellTypeL"<< cellTypeL << std::endl;
+			//std::cout << cellTypeL << "\n";
         }
     }
     //2147483647
@@ -290,7 +290,7 @@ void HydraProducer::produce( Event &iEvent, const EventSetup & )
 	//loop over the multimap
     unordered_multimap<uint32_t,tuple<unsigned,unsigned,float> >::const_iterator it;
     for (it = temp_recoDetIdToSimHit.begin();it != temp_recoDetIdToSimHit.end();++it){
-    	std::cout << "recoDetIdToSimId recHit Id = " << it->first << " i=" << get<0>(it->second) << " j=" << get<1>(it->second) << " frac=" << get<2>(it->second) << std::endl;
+    	//std::cout << "recoDetIdToSimId recHit Id = " << it->first << " i=" << get<0>(it->second) << " j=" << get<1>(it->second) << " frac=" << get<2>(it->second) << std::endl;
     }
     // calculate and store the weights for particles associated to 
     // pcalohits

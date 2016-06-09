@@ -55,7 +55,7 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
   }
   //assign all hits in each layer to a cluster core or halo
   for (unsigned int i = 0; i <= 2*maxlayer+1; ++i) {
-    if( i != 15 ) continue;
+    if( !(i == 10 || i == 39) ) continue;
     double maxdensity = calculateLocalDensity(points[i]);
     // std::cout << "layer " << i << " max density " << maxdensity 
     // 	      << " total hits " << points[i].size() << std::endl;
@@ -75,30 +75,46 @@ HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
       //std::cout << " sharing found " << seeds.size() << " sub-cluster seeds in cluster " << i << std::endl;
       
       std::vector<std::vector<double> > fractions;
+      // first pass can have noise it in
       shareEnergy(current_v[i],seeds,fractions);
+
+      // reset and run second pass after vetoing seeds
+      // that result in trivial clusters (less than 2 effective cells)
       
+      if (verbosity < pINFO)
+	{ 
+	  std::cout << "******** NEW CLUSTER (HGCIA) ********" << std::endl;
+	  std::cout << "No. of cells = " << current_v[i].size() << std::endl;
+	  std::cout << "     Energy     = " << energy << std::endl;
+	  std::cout << "     Phi        = " << position.phi() << std::endl;
+	  std::cout << "     Eta        = " << position.eta() << std::endl;
+	  std::cout << "*****************************" << std::endl;
+	}
+
       for( unsigned isub = 0; isub < fractions.size(); ++isub ) {
 	double effective_hits = 0.0;
 	double energy  = calculateEnergyWithFraction(current_v[i],fractions[isub]);
 	Point position = calculatePositionWithFraction(current_v[i],fractions[isub]);
-	
+
 	//std::cout << "Fractions*Energies: ";
 	for( unsigned ihit = 0; ihit < fractions[isub].size(); ++ihit ) {
 	  const double fraction = fractions[isub][ihit];
-	  //std::cout << fraction << "*" << current_v[i][ihit].weight << " ";
-	  effective_hits += fraction;
-	  thisCluster.emplace_back(current_v[i][ihit].detid,fraction);
+	  if( fraction > 1e-7 ) {
+	    //std::cout << fraction << "*" << current_v[i][ihit].weight << " ";
+	    effective_hits += fraction;
+	    thisCluster.emplace_back(current_v[i][ihit].detid,fraction);
+	  }
 	}
 	//std::cout << std::endl;
 	
 	if (verbosity < pINFO)
 	  { 
-	    std::cout << "******** NEW CLUSTER (SHARING) ********" << std::endl;
-	    std::cout << "Eff. No. of cells = " << effective_hits << std::endl;
-	    std::cout << "     Energy       = " << energy << std::endl;
-	    std::cout << "     Phi          = " << position.phi() << std::endl;
-	    std::cout << "     Eta          = " << position.eta() << std::endl;
-	    std::cout << "*****************************" << std::endl;
+	    std::cout << "\t******** NEW CLUSTER (SHARING) ********" << std::endl;
+	    std::cout << "\tEff. No. of cells = " << effective_hits << std::endl;
+	    std::cout << "\t     Energy       = " << energy << std::endl;
+	    std::cout << "\t     Phi          = " << position.phi() << std::endl;
+	    std::cout << "\t     Eta          = " << position.eta() << std::endl;
+	    std::cout << "\t*****************************" << std::endl;
 	  }
 	clusters_v.push_back(reco::BasicCluster(energy, position, caloID, thisCluster, 
 						reco::CaloCluster::hgcal_em));
@@ -317,7 +333,7 @@ std::vector<unsigned> HGCalImagingAlgo::findLocalMaximaInCluster(const std::vect
   }
 
   for( unsigned i = 0 ; i < cluster.size(); ++i ) {
-    if( seed[i] ) {
+    if( seed[i] && cluster[i].weight > 5e-4) {
       //std::cout << "seed at " << i << " with energy " << cluster[i].weight << std::endl;
       result.push_back(i);
     }
@@ -392,6 +408,8 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     }
   }
 
+  //return;
+
   //std::cout << "fit initialized" << std::endl;
 
   // run the fit while we are less than max iterations, and clusters are still moving
@@ -416,7 +434,7 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
 	// now we set the fractions up based on hit type
 	if( i == seeds[j] ) { // this cluster's seed
 	  fraction = 1.0;
-	} else if( isaseed[i]  ) {
+	} else if( isaseed[i] ) {
 	  fraction = 0.0;
 	} else {	  
 	  fraction = energies[j]*std::exp( -0.5*d2 );
@@ -451,5 +469,5 @@ void HGCalImagingAlgo::shareEnergy(const std::vector<Hexel>& incluster,
     //update convergance parameter outside loop
     diff = std::sqrt(diff2);
     //std::cout << " iteration = " << iter << " diff = " << diff << std::endl;
-  }
+  } 
 }
