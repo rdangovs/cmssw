@@ -40,7 +40,6 @@ class HGCRecHitNavigator : public PFRecHitNavigatorBase {
     descriptions.add("navigator", desc);
   }
   
-
   HGCRecHitNavigator(const edm::ParameterSet& iConfig) {
     if( iConfig.exists("hgcee") ) {
       eeNav_ = new hgcee(iConfig.getParameter<edm::ParameterSet>("hgcee"));

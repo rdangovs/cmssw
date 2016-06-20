@@ -25,7 +25,7 @@ LocalMaximumSeedFinder(const edm::ParameterSet& conf) :
 	      {"HCAL_BARREL2_RING1", 19}, 
 	      {"HCAL_ENDCAP",(int)PFLayer::HCAL_ENDCAP},
 	      {"HF_EM",(int)PFLayer::HF_EM},
-	      {"HF_HAD",(int)PFLayer::HF_HAD} }) {
+              {"HF_HAD",(int)PFLayer::HF_HAD}    }) {
   const std::vector<edm::ParameterSet>& thresholds =
     conf.getParameterSetVector("thresholdsByDetector");
   for( const auto& pset : thresholds ) {
