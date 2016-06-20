@@ -9,11 +9,24 @@
 //
 #include "DataFormats/CaloRecHit/interface/CaloID.h"
 
+namespace seezview {
+  struct hit{
+    uint32_t id;
+    float energy;
+    float density;
+    float distance;
+    uint32_t cindex;
+    uint32_t flags;
+    bool isBorder()const {return (bool)flags&0x1;}
+    bool isHalo()const {return (bool)flags&0x2;}
+  };
+}
+
+
 // Create a vector of Hexels associated to one cluster from a collection of HGCalRecHits - this can be used 
 // directly to make the final cluster list - this method can be invoked multiple times for the same event 
 // with different input (reset should be called between events)
-void HGCalImagingAlgo::makeClusters(
-				    const HGCRecHitCollection& hits)
+void HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 
 {
 
@@ -93,6 +106,7 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::getClusters(bool doSharing){
 
   reco::CaloID caloID = reco::CaloID::DET_HGCAL_ENDCAP;
   std::vector< std::pair<DetId, float> > thisCluster;
+  
   for (unsigned int i = 0; i < current_v.size(); i++){
     double energy = 0;
     Point position;
