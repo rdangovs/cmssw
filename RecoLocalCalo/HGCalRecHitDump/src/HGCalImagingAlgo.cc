@@ -57,28 +57,6 @@ void HGCalImagingAlgo::makeClusters(
       const int waferType = ddd->waferTypeT(hid.waferType());  
       isHalf = ddd->isHalfCell(waferType,hid.cell());
     }
-<<<<<<< HEAD
-    points[layer].push_back(Hexel(hgrh,detid,isHalf,geometry));
-  }
-  //assign all hits in each layer to a cluster core or halo
-  for (unsigned int i = 0; i <= 2*maxlayer+1; ++i) {
-    if( !(i == 10 || i == 39) ) continue;
-    double maxdensity = calculateLocalDensity(points[i]);
-    // std::cout << "layer " << i << " max density " << maxdensity 
-    // 	      << " total hits " << points[i].size() << std::endl;
-    calculateDistanceToHigher(points[i]);
-    findAndAssignClusters(points[i],maxdensity);
-    //    std::cout << "found " << nclusters << " clusters" << std::endl;
-  }
-  //make the cluster vector
-  reco::CaloID caloID = reco::CaloID::DET_HGCAL_ENDCAP;
-  for (unsigned int i = 0; i < current_v.size(); i++){
-    double energy = 0;
-    Point position;
-    std::vector< std::pair<DetId, float> > thisCluster;
-    
-    if( doSharing ) {
-=======
     const GlobalPoint position( std::move( geometry->getPosition( detid ) ) );
     //here's were the KDNode is passed its dims arguments - note that these are *copied* from the Hexel
     points[layer].emplace_back(Hexel(hgrh,detid,isHalf,geometry),position.x(),position.y());

@@ -15,7 +15,7 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryExtended2023LRecoReco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023simReco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.RawToDigi_cff')
 process.load('Configuration.StandardSequences.L1Reco_cff')
@@ -58,6 +58,9 @@ process.FEVTDEBUGHLToutput = cms.OutputModule("PoolOutputModule",
 )
 
 # Additional output definition
+process.FEVTDEBUGHLToutput.outputCommands.append('keep *_imagingClusterHGCal_*_*')
+process.FEVTDEBUGHLToutput.outputCommands.append('keep *_FakeCluster*_*_*')
+
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -121,4 +124,6 @@ process.localreco += process.Hydra
 process.localreco += process.FakeClusterGen
 process.localreco += process.FakeClusterCaloFace
 process.imagingClusterHGCal.detector = cms.string("both")
+process.imagingClusterHGCal.showerSigma = cms.double(2.8)
+process.imagingClusterHGCal.doSharing = cms.bool(True)
 process.localreco += process.imagingClusterHGCal
