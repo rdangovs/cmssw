@@ -63,9 +63,7 @@ process.FEVTDEBUGHLToutput = cms.OutputModule("PoolOutputModule",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 
-process.TestHGCClusters = cms.EDProducer(
-    'HGCalClusterTestProducer'
-    )
+process.load('RecoLocalCalo.HGCalRecHitDump.imagingClusterHGCal_cfi')
 
 process.load('CommonTools.UtilAlgos.TFileService_cfi')
 process.TFileService.fileName = cms.string('hydra.root')
@@ -98,6 +96,7 @@ process.FakeClusterCaloFace = cms.EDProducer(
     MinDebugEnergy=cms.untracked.double(30.)
     )
 
+
 # Path and EndPath definitions
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.L1Reco_step = cms.Path(process.L1Reco)
@@ -121,4 +120,5 @@ process.localreco += process.particleFlowRecHitHGCSeq
 process.localreco += process.Hydra
 process.localreco += process.FakeClusterGen
 process.localreco += process.FakeClusterCaloFace
-process.localreco += process.TestHGCClusters
+process.imagingClusterHGCal.detector = cms.string("both")
+process.localreco += process.imagingClusterHGCal

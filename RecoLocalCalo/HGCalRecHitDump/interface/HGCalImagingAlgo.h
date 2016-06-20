@@ -2,6 +2,7 @@
 #define RecoHGCAL_HGCALClusters_HGCalImagingAlgo_h
 
 #include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
+#include "Geometry/CaloTopology/interface/HGCalTopology.h"
 #include "DataFormats/ForwardDetId/interface/HGCEEDetId.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
@@ -20,6 +21,7 @@
 #include <vector>
 #include <set>
 
+#include "KDTreeLinkerAlgoT.h"
 
 template <typename T>
 std::vector<size_t> sorted_indices(const std::vector<T> &v) {
@@ -38,46 +40,46 @@ std::vector<size_t> sorted_indices(const std::vector<T> &v) {
 
 class HGCalImagingAlgo 
 {
+
+  
  public:
   
   enum VerbosityLevel { pDEBUG = 0, pWARNING = 1, pINFO = 2, pERROR = 3 }; 
-  
- HGCalImagingAlgo() : delta_c(0.), kappa(1.), ecut(0.), 
-    cluster_offset(0),
-    doSharing(false), sigma2(1.0),
-    geometry(0), ddd(0), 
-    //topology(*thetopology_p), 
-    verbosity(pERROR), 
-    points(maxlayer+1){
-  }
 
-  HGCalImagingAlgo(double delta_c_in, double kappa_in, double ecut_in,
+ HGCalImagingAlgo() : delta_c(0.), kappa(1.), ecut(0.), cluster_offset(0),
+		      geometry(0), ddd(0), 
+		      //topology(*thetopology_p), 
+		      algoId(reco::CaloCluster::undefined),
+		      verbosity(pERROR){
+ }
+  
+  HGCalImagingAlgo(float delta_c_in, double kappa_in, double ecut_in,
 		   const HGCalGeometry *thegeometry_p,
 		   //		   const CaloSubdetectorTopology *thetopology_p,
+		   reco::CaloCluster::AlgoId algoId_in,
 		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
-    ecut(ecut_in),    
-    cluster_offset(0),
-    doSharing(false),
-    sigma2(1.0),
-    geometry(thegeometry_p), 
-    //topology(*thetopology_p), 
-    verbosity(the_verbosity), 
-    points(maxlayer+1){
+							    ecut(ecut_in),    
+							    cluster_offset(0),
+							    sigma2(1.0),
+							    geometry(thegeometry_p), 
+							    //topology(*thetopology_p), 
+							    algoId(algoId_in),
+							    verbosity(the_verbosity){
   }
   
-  HGCalImagingAlgo(double delta_c_in, double kappa_in, double ecut_in,
+  HGCalImagingAlgo(float delta_c_in, double kappa_in, double ecut_in,
 		   double showerSigma, 
 		   const HGCalGeometry *thegeometry_p,
 		   //		   const CaloSubdetectorTopology *thetopology_p,
+		   reco::CaloCluster::AlgoId algoId_in,
 		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
-    ecut(ecut_in),    
-    cluster_offset(0),
-    doSharing(true),
-    sigma2(std::pow(showerSigma,2.0)),
-    geometry(thegeometry_p), 
-    //topology(*thetopology_p), 
-    verbosity(the_verbosity), 
-    points(maxlayer+1){
+							    ecut(ecut_in),    
+							    cluster_offset(0),
+							    sigma2(std::pow(showerSigma,2.0)),
+							    geometry(thegeometry_p), 
+							    //topology(*thetopology_p), 
+							    algoId(algoId_in),
+							    verbosity(the_verbosity){
   }
 
   virtual ~HGCalImagingAlgo()
@@ -88,20 +90,30 @@ class HGCalImagingAlgo
     {
       verbosity = the_verbosity;
     }
-
-  // this is the method that will start the clusterisation
-  std::vector<reco::BasicCluster> makeClusters(const HGCRecHitCollection &hits);
-
+  
+  // this is the method that will start the clusterisation (it is possible to invoke this method more than once - but make sure it is with 
+  // different hit collections (or else use reset)
+  void makeClusters(const HGCRecHitCollection &hits);
+  // this is the method to get the cluster collection out 
+  std::vector<reco::BasicCluster> getClusters(bool);
+  // needed to switch between EE and HE with the same algorithm object (to get a single cluster collection)
+  void setGeometry(const HGCalGeometry *thegeometry_p){geometry = thegeometry_p;}
+  // use this if you want to reuse the same cluster object but don't want to accumulate clusters (hardly useful?)
+  void reset(){
+    current_v.clear();
+    clusters_v.clear();
+    cluster_offset = 0;
+  }
   /// point in the space
   typedef math::XYZPoint Point;
 
  private: 
   
   //max number of layers
-  static const unsigned int maxlayer = 28;
+  static const unsigned int maxlayer = 39;
 
   // The two parameters used to identify clusters
-  double delta_c;
+  float delta_c;
   double kappa;
 
   // The hit energy cutoff
@@ -111,7 +123,6 @@ class HGCalImagingAlgo
   unsigned int cluster_offset;
 
   // for energy sharing
-  bool doSharing;
   double sigma2; // transverse shower size
 
   // The vector of clusters
@@ -121,9 +132,12 @@ class HGCalImagingAlgo
   //  const HGCalTopology &topology;
   const HGCalDDDConstants* ddd;
 
+  // The algo id
+  reco::CaloCluster::AlgoId algoId;
+
   // The verbosity level
   VerbosityLevel verbosity;
-  
+
   struct Hexel {
 
     double x;
@@ -149,14 +163,8 @@ class HGCalImagingAlgo
     {
       const GlobalPoint position( std::move( geometry->getPosition( detid ) ) );
       const HGCalGeometry::CornersVec corners( std::move( geometry->getCorners( detid ) ) );
-      //      float thickness = abs(corners[7].z()-corners[0].z());
-      float fudge_thickness = 1.;
-      //this is supposed to no longer be necessary...
-      // if(thickness<.025 && thickness > .011)
-      // 	  fudge_thickness = 2.;
-      // 	else if(thickness>.021)
-      // 	  fudge_thickness = 2.82;
-      weight = hit.energy()/fudge_thickness;
+
+      weight = hit.energy();
       x = position.x();
       y = position.y();
       z = position.z();
@@ -164,7 +172,7 @@ class HGCalImagingAlgo
     }
     Hexel() : 
       x(0.),y(0.),z(0.),isHalfCell(false),
-      weight(0.),detid(), rho(0.), delta(0.),
+      weight(0.), fraction(1.0), detid(), rho(0.), delta(0.),
       nearestHigher(-1), isBorder(false), isHalo(false), 
       clusterIndex(-1),
       geometry(0)
@@ -174,14 +182,19 @@ class HGCalImagingAlgo
     }
     
   };
-  // A vector of vectors of DetId's in the clusters
-  std::vector< std::vector<Hexel> > current_v;
+  
+  typedef KDTreeLinkerAlgo<Hexel,2> KDTree;
+  typedef KDTreeNodeInfoT<Hexel,2> KDNode;
 
-  std::vector<size_t> sort_by_delta(const std::vector<Hexel> &v){
+
+  // A vector of vectors of KDNodes holding an Hexel in the clusters - to be used to build CaloClusters of DetIds
+  std::vector< std::vector<KDNode> > current_v;
+
+  std::vector<size_t> sort_by_delta(const std::vector<KDNode> &v){
     std::vector<size_t> idx(v.size());
     for (size_t i = 0; i != idx.size(); ++i) idx[i] = i;
     sort(idx.begin(), idx.end(),
-	 [&v](size_t i1, size_t i2) {return v[i1].delta > v[i2].delta;});
+	 [&v](size_t i1, size_t i2) {return v[i1].data.delta > v[i2].data.delta;});
     return idx;
   }
 
@@ -190,19 +203,19 @@ class HGCalImagingAlgo
 
   //these functions should be in a helper class.
   double distance(const Hexel &pt1, const Hexel &pt2); //2-d distance on the layer (x-y)
-  double calculateLocalDensity(std::vector<Hexel> &); //return max density
-  double calculateDistanceToHigher(std::vector<Hexel> &);
-  int findAndAssignClusters(std::vector<Hexel> &, double);
-  math::XYZPoint calculatePosition(std::vector<Hexel> &);
+  double calculateLocalDensity(std::vector<KDNode> &, KDTree &); //return max density
+  double calculateDistanceToHigher(std::vector<KDNode> &, KDTree &);
+  int findAndAssignClusters(std::vector<KDNode> &, KDTree &, double, KDTreeBox &);
+  math::XYZPoint calculatePosition(std::vector<KDNode> &);
 
   // attempt to find subclusters within a given set of hexels
-  std::vector<unsigned> findLocalMaximaInCluster(const std::vector<Hexel>&);
-  math::XYZPoint calculatePositionWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
-  double calculateEnergyWithFraction(const std::vector<Hexel>&, const std::vector<double>&);
+  std::vector<unsigned> findLocalMaximaInCluster(const std::vector<KDNode>&);
+  math::XYZPoint calculatePositionWithFraction(const std::vector<KDNode>&, const std::vector<double>&);
+  double calculateEnergyWithFraction(const std::vector<KDNode>&, const std::vector<double>&);
   // outputs
-  void shareEnergy(const std::vector<Hexel>&, 
+  void shareEnergy(const std::vector<KDNode>&, 
 		   const std::vector<unsigned>&,
 		   std::vector<std::vector<double> >&);
- };
+};
 
 #endif
