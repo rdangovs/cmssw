@@ -61,6 +61,10 @@ void HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 
     int layer = HGCalDetId(detid).layer()+int(HGCalDetId(detid).zside()>0)*(maxlayer+1);
     
+    const int layer_select = 5;
+    if( layer != layer_select && 
+	layer != int(layer_select + int(HGCalDetId(detid).zside()>0)*(maxlayer+1)) ) continue;
+
     // determine whether this is a half-hexagon
     // (copied from Lindsey's code not (yet?) available in release - is this even right ?
 
@@ -107,6 +111,8 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::getClusters(bool doSharing){
   reco::CaloID caloID = reco::CaloID::DET_HGCAL_ENDCAP;
   std::vector< std::pair<DetId, float> > thisCluster;
   
+  clusters_v.clear();
+
   for (unsigned int i = 0; i < current_v.size(); i++){
     double energy = 0;
     Point position;
@@ -115,12 +121,22 @@ std::vector<reco::BasicCluster> HGCalImagingAlgo::getClusters(bool doSharing){
       std::vector<unsigned> seeds = findLocalMaximaInCluster(current_v[i]);
       //std::cout << " sharing found " << seeds.size() << " sub-cluster seeds in cluster " << i << std::endl;
       
-      std::vector<std::vector<double> > fractions;
+      std::vector<std::vector<double> > fractions_first;
       // first pass can have noise it in
-      shareEnergy(current_v[i],seeds,fractions);
+      shareEnergy(current_v[i],seeds,fractions_first);
 
       // reset and run second pass after vetoing seeds
-      // that result in trivial clusters (less than 2 effective cells)
+      // that result in trivial clusters (less than 1.9 effective cells)
+      std::vector<unsigned> clean_seeds;
+      std::vector<std::vector<double> > fractions;
+      for( unsigned isub = 0; isub < fractions_first.size(); ++isub ) {
+	double effective_hits = 0.0;
+	for( unsigned ihit = 0; ihit < fractions_first[isub].size(); ++ihit ) {
+	  effective_hits += fractions_first[isub][ihit];
+	}
+	if( effective_hits > 2.0 || fractions_first[isub].size() <= 2) clean_seeds.push_back(seeds[isub]);
+      }
+      shareEnergy(current_v[i],clean_seeds,fractions);
       
       if (verbosity < pINFO)
 	{ 

@@ -14,6 +14,8 @@
 #include "RecoParticleFlow/PFClusterProducer/interface/PFClusterBuilderBase.h"
 #include "RecoParticleFlow/PFClusterProducer/interface/PFCPositionCalculatorBase.h"
 #include "RecoParticleFlow/PFClusterProducer/interface/PFClusterEnergyCorrectorBase.h"
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
 
 #include <memory>
 
@@ -39,6 +41,7 @@ class HGCalClusterTestProducer : public edm::stream::EDProducer<> {
   edm::EDGetTokenT<HGCRecHitCollection> hits_ee_token;
   edm::EDGetTokenT<HGCRecHitCollection> hits_ef_token;
   edm::EDGetTokenT<std::vector<reco::PFCluster> > hydraTokens[2];
+  edm::EDGetTokenT<edm::View<reco::Candidate> > genParticlesToken;
 
   reco::CaloCluster::AlgoId algoId;
 
@@ -81,6 +84,8 @@ HGCalClusterTestProducer::HGCalClusterTestProducer(const edm::ParameterSet &ps) 
   hydraTokens[0] = consumes<std::vector<reco::PFCluster> >( edm::InputTag("FakeClusterGen") );
   hydraTokens[1] = consumes<std::vector<reco::PFCluster> >( edm::InputTag("FakeClusterCaloFace") );
 
+  genParticlesToken = consumes<edm::View<reco::Candidate> >( edm::InputTag("genParticles") );
+
   std::cout << "Constructing HGCalClusterTestProducer" << std::endl;
 
   produces<std::vector<reco::BasicCluster> >();
@@ -97,6 +102,10 @@ void HGCalClusterTestProducer::produce(edm::Event& evt,
 
   edm::Handle<HGCRecHitCollection> ee_hits;
   edm::Handle<HGCRecHitCollection> ef_hits;
+
+  edm::Handle<edm::View<reco::Candidate> > genParticlesH;
+  evt.getByToken(genParticlesToken, genParticlesH);
+  const auto& genParticles = *genParticlesH;
 
   std::unique_ptr<std::vector<reco::BasicCluster> > clusters( new std::vector<reco::BasicCluster> ), 
     clusters_sharing( new std::vector<reco::BasicCluster> );
@@ -139,6 +148,10 @@ void HGCalClusterTestProducer::produce(edm::Event& evt,
   for( unsigned i = 0 ; i < 2; ++i ) {
     evt.getByToken(hydraTokens[i],hydra[i]);
     std::cout << "hydra " << names[i] << " size : " << hydra[i]->size() << std::endl;
+  }
+
+  for(unsigned i = 0; i < genParticles.size(); ++i ) {
+    std::cout << genParticles[i].pt() << ' ' << genParticles[i].eta() << ' ' << genParticles[i].phi() << std::endl;
   }
 
   evt.put(std::move(clusters));
