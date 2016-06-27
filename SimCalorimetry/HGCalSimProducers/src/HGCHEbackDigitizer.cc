@@ -42,6 +42,7 @@ void HGCHEbackDigitizer::runCaliceLikeDigitizer(std::unique_ptr<HGCHEDigiCollect
 	{          
 	  //convert total energy keV->MIP, since converted to keV in accumulator
 	  const float totalIniMIPs( (it->second).hit_info[0][i]*keV2MIP_ );
+
           //std::cout << "energy in MIP: " << std::scientific << totalIniMIPs << std::endl;
 
 	  //generate random number of photon electrons

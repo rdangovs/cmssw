@@ -1,0 +1,17 @@
+<lcgdict>
+<class name="SimHitInfo_t"/>
+<class name="BarcodeIndexPair_t"/>
+<class name="BarcodePair_t"/>
+<class name="HighRapidityDevRecoAssociation" ClassVersion="11" >
+  <version ClassVersion="10" checksum="1707523782"/>
+  <version ClassVersion="11" checksum="2295346803"/>
+</class>
+<class name="std::vector<HighRapidityDevRecoAssociation>"/>
+<class name="edm::Wrapper<std::vector<HighRapidityDevRecoAssociation> >"/>
+<class name="edm::PtrVector<reco::PFRecTrack>"/>
+<class name="edm::PtrVector<reco::PFRecHit>"/>
+<class name="edm::PtrVector<reco::GenParticle>"/>
+<class name="edm::PtrVector<SimTrack>"/>
+<class name="edm::PtrVector<SimVertex>"/>
+<class name="edm::PtrVector<PCaloHit>"/>
+</lcgdict>
