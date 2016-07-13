@@ -46,7 +46,8 @@ class HGCalImagingAlgo
   
   enum VerbosityLevel { pDEBUG = 0, pWARNING = 1, pINFO = 2, pERROR = 3 }; 
 
- HGCalImagingAlgo() : delta_c(0.), kappa(1.), ecut(0.), cluster_offset(0),
+ HGCalImagingAlgo() : layer_select(-1), delta_c(0.), kappa(1.), ecut(0.), 
+                      cluster_offset(0),
 		      geometry(0), ddd(0), 
 		      //topology(*thetopology_p), 
 		      algoId(reco::CaloCluster::undefined),
@@ -57,30 +58,38 @@ class HGCalImagingAlgo
 		   const HGCalGeometry *thegeometry_p,
 		   //		   const CaloSubdetectorTopology *thetopology_p,
 		   reco::CaloCluster::AlgoId algoId_in,
-		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
-							    ecut(ecut_in),    
-							    cluster_offset(0),
-							    sigma2(1.0),
-							    geometry(thegeometry_p), 
-							    //topology(*thetopology_p), 
-							    algoId(algoId_in),
-							    verbosity(the_verbosity){
-  }
+		   VerbosityLevel the_verbosity = pERROR,
+		   int dbglayer = -1) : 
+    layer_select(dbglayer),
+    delta_c(delta_c_in), 
+    kappa(kappa_in), 
+    ecut(ecut_in),    
+    cluster_offset(0),
+    sigma2(1.0),
+    geometry(thegeometry_p), 
+    //topology(*thetopology_p), 
+    algoId(algoId_in),
+    verbosity(the_verbosity){
+    }
   
   HGCalImagingAlgo(float delta_c_in, double kappa_in, double ecut_in,
 		   double showerSigma, 
 		   const HGCalGeometry *thegeometry_p,
 		   //		   const CaloSubdetectorTopology *thetopology_p,
 		   reco::CaloCluster::AlgoId algoId_in,
-		   VerbosityLevel the_verbosity = pERROR) : delta_c(delta_c_in), kappa(kappa_in), 
-							    ecut(ecut_in),    
-							    cluster_offset(0),
-							    sigma2(std::pow(showerSigma,2.0)),
-							    geometry(thegeometry_p), 
-							    //topology(*thetopology_p), 
-							    algoId(algoId_in),
-							    verbosity(the_verbosity){
-  }
+		   VerbosityLevel the_verbosity = pERROR,
+		   int dbglayer = -1) : 
+    layer_select(dbglayer),
+    delta_c(delta_c_in), 
+    kappa(kappa_in), 
+    ecut(ecut_in),    
+    cluster_offset(0),
+    sigma2(std::pow(showerSigma,2.0)),
+    geometry(thegeometry_p), 
+    //topology(*thetopology_p), 
+    algoId(algoId_in),
+    verbosity(the_verbosity){
+    }
 
   virtual ~HGCalImagingAlgo()
     {
@@ -111,6 +120,7 @@ class HGCalImagingAlgo
   
   //max number of layers
   static const unsigned int maxlayer = 39;
+  const int layer_select; // for debugging
 
   // The two parameters used to identify clusters
   float delta_c;

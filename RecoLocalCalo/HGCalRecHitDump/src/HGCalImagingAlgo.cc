@@ -26,9 +26,7 @@ namespace seezview {
 // Create a vector of Hexels associated to one cluster from a collection of HGCalRecHits - this can be used 
 // directly to make the final cluster list - this method can be invoked multiple times for the same event 
 // with different input (reset should be called between events)
-void HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
-
-{
+void HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits) {
 
   const HGCalDDDConstants* ddd = &(geometry->topology().dddConstants());
 
@@ -61,8 +59,8 @@ void HGCalImagingAlgo::makeClusters(const HGCRecHitCollection& hits)
 
     int layer = HGCalDetId(detid).layer()+int(HGCalDetId(detid).zside()>0)*(maxlayer+1);
     
-    const int layer_select = 5;
-    if( layer != layer_select && 
+    if( layer_select != -1 && 
+	layer != layer_select && 
 	layer != int(layer_select + int(HGCalDetId(detid).zside()>0)*(maxlayer+1)) ) continue;
 
     // determine whether this is a half-hexagon
