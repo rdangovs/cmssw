@@ -215,7 +215,8 @@ class HGCalImagingAlgo
   double distance(const Hexel &pt1, const Hexel &pt2); //2-d distance on the layer (x-y)
   double calculateLocalDensity(std::vector<KDNode> &, KDTree &); //return max density
   double calculateDistanceToHigher(std::vector<KDNode> &, KDTree &);
-  int findAndAssignClusters(std::vector<KDNode> &, KDTree &, double, KDTreeBox &);
+  double calculateClusterDensity(std::vector<KDNode> &); 
+	int findAndAssignClusters(std::vector<KDNode> &, KDTree &, double, KDTreeBox &);
   math::XYZPoint calculatePosition(std::vector<KDNode> &);
 
   // attempt to find subclusters within a given set of hexels
