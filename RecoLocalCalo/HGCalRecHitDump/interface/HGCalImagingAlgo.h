@@ -215,13 +215,15 @@ class HGCalImagingAlgo
   double distance(const Hexel &pt1, const Hexel &pt2); //2-d distance on the layer (x-y)
   double calculateLocalDensity(std::vector<KDNode> &, KDTree &); //return max density
   double calculateDistanceToHigher(std::vector<KDNode> &, KDTree &);
-  double calculateClusterDensity(std::vector<KDNode> &); 
+  //double calculateClusterDenisty(std::vector<KDNode> &); 
 	int findAndAssignClusters(std::vector<KDNode> &, KDTree &, double, KDTreeBox &);
   math::XYZPoint calculatePosition(std::vector<KDNode> &);
 
   // attempt to find subclusters within a given set of hexels
   std::vector<unsigned> findLocalMaximaInCluster(const std::vector<KDNode>&);
   math::XYZPoint calculatePositionWithFraction(const std::vector<KDNode>&, const std::vector<double>&);
+  double calculateClusterDensity (std::vector<KDNode>&); 
+
   double calculateEnergyWithFraction(const std::vector<KDNode>&, const std::vector<double>&);
   // outputs
   void shareEnergy(const std::vector<KDNode>&, 

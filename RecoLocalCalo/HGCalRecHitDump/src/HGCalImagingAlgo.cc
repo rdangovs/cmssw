@@ -240,7 +240,7 @@ double HGCalImagingAlgo::calculateLocalDensity(std::vector<KDNode> &nd, KDTree &
     for(unsigned int j = 0; j < found.size(); j++){
 	 	double distij = distance(nd[i].data,found[j].data); 
       if(distij < delta_c){
-	nd[i].data.rho += (found[j].data.weight) * exp (- 2.8 * distij); //2.8 stands for the R_m 
+	nd[i].data.rho += (found[j].data.weight);
       }
       if(nd[i].data.rho > maxdensity) maxdensity = nd[i].data.rho;
     }
@@ -456,6 +456,29 @@ math::XYZPoint HGCalImagingAlgo::calculatePositionWithFraction(const std::vector
   double norm_inv = 1.0/norm;
   result *= norm_inv;
   return result;
+}
+
+//calculates the density, suggested by Chris; note that 2.8 is the R_m radius; 0.357 is 1/R_m
+double HGCalImagingAlgo::calculateClusterDensity(std::vector<KDNode>& cluster) { 
+	double ans = 0.0;
+	float total_weight = 0.;
+  	float x = 0.;
+  	float y = 0.;
+  	float z = 0.;
+  	for (unsigned int i = 0; i < cluster.size(); i++){
+    		if(!cluster[i].data.isHalo){
+      			total_weight += cluster[i].data.weight;
+      			x += cluster[i].data.x*cluster[i].data.weight;
+     	 		y += cluster[i].data.y*cluster[i].data.weight;
+      			z += cluster[i].data.z*cluster[i].data.weight;
+    		}
+  	}
+	for (unsigned i = 0; i < cluster.size (); ++ i) {
+		double dist = sqrt ( pow (cluster[i].data.x - x, 2) + pow (cluster[i].data.y - y, 2));
+		if (dist < 2.8) 
+					ans += cluster[i].data.weight * exp (- 0.357 * dist);   	
+	}
+	return ans;	
 }
 
 double HGCalImagingAlgo::calculateEnergyWithFraction(const std::vector<KDNode>& hits,
