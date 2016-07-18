@@ -238,8 +238,8 @@ double HGCalImagingAlgo::calculateLocalDensity(std::vector<KDNode> &nd, KDTree &
     for(unsigned int j = 0; j < found.size(); j++){
       if(distance(nd[i].data,found[j].data) < delta_c){
 	nd[i].data.rho += found[j].data.weight;
-	if(nd[i].data.rho > maxdensity) maxdensity = nd[i].data.rho;
       }
+      if(nd[i].data.rho > maxdensity) maxdensity = nd[i].data.rho;
     }
   }
   return maxdensity;
