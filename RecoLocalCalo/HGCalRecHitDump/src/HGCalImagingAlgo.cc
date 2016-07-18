@@ -9,6 +9,8 @@
 //
 #include "DataFormats/CaloRecHit/interface/CaloID.h"
 
+#include <cmath> 
+
 namespace seezview {
   struct hit{
     uint32_t id;
@@ -236,8 +238,9 @@ double HGCalImagingAlgo::calculateLocalDensity(std::vector<KDNode> &nd, KDTree &
     std::vector<KDNode> found;
     lp.search(search_box,found);
     for(unsigned int j = 0; j < found.size(); j++){
-      if(distance(nd[i].data,found[j].data) < delta_c){
-	nd[i].data.rho += found[j].data.weight;
+	 	double distij = distance(nd[i].data,found[j].data); 
+      if(distij < delta_c){
+	nd[i].data.rho += (found[j].data.weight) * exp (- 2.8 * distij);
       }
       if(nd[i].data.rho > maxdensity) maxdensity = nd[i].data.rho;
     }
