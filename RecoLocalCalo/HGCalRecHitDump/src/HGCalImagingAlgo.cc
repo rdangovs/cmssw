@@ -458,7 +458,7 @@ math::XYZPoint HGCalImagingAlgo::calculatePositionWithFraction(const std::vector
   return result;
 }
 
-//calculates the density, suggested by Chris; note that 2.8 is the R_m radius; 0.357 is 1/R_m
+//calculates the density, as suggested by Chris, note that 2.8 is R_m
 double HGCalImagingAlgo::calculateClusterDensity(std::vector<KDNode>& cluster) { 
 	double ans = 0.0;
 	float total_weight = 0.;
@@ -476,7 +476,7 @@ double HGCalImagingAlgo::calculateClusterDensity(std::vector<KDNode>& cluster) {
 	for (unsigned i = 0; i < cluster.size (); ++ i) {
 		double dist = sqrt ( pow (cluster[i].data.x - x, 2) + pow (cluster[i].data.y - y, 2));
 		if (dist < 2.8) 
-					ans += cluster[i].data.weight * exp (- 0.357 * dist);   	
+					ans += cluster[i].data.weight;   	
 	}
 	return ans;	
 }
